@@ -1,7 +1,5 @@
 import '../models/movie.dart';
 
-
-
 final List<Movie> mockMovies = [
   Movie(
     id: "1",
@@ -12,6 +10,7 @@ final List<Movie> mockMovies = [
     posterUrl: "lib/images/poster1.jpg",
     status: "now_showing",
     releaseDate: "2025-09-19",
+    description: "Trận chiến cuối cùng.",
 
   ),
   Movie(
@@ -20,9 +19,10 @@ final List<Movie> mockMovies = [
     genre: "Action",
     duration: 150,
     rating: 8.5,
-    posterUrl: "https://i.imgur.com/BtYH6xD.jpeg",
+    posterUrl: "lib/images/batman.jpg",
     status: "coming_soon",
     releaseDate: "2025-11-01",
+    description: "Bruce Wayne đối đầu kẻ thù trong thành phố tội lỗi Gotham.",
   ),
   Movie(
     id: "3",
@@ -30,8 +30,13 @@ final List<Movie> mockMovies = [
     genre: "Action",
     duration: 180,
     rating: 9.0,
-    posterUrl: "https://i.imgur.com/7W5A9nB.jpeg",
+    posterUrl: "lib/images/AvengersEndgame.jpg",
     status: "now_showing",
     releaseDate: "2019-04-26",
+    description: "Trận chiến cuối cùng giữa Avengers và Thanos.",
   ),
 ];
+
+
+
+

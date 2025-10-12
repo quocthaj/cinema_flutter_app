@@ -7,7 +7,7 @@ class Movie {
   final String posterUrl;
   final String status; // now_showing | coming_soon
   final String releaseDate;
-
+  final String description; // ✅ thêm dòng này
 
   Movie({
     required this.id,
@@ -18,7 +18,7 @@ class Movie {
     required this.posterUrl,
     required this.status,
     required this.releaseDate,
-
+    required this.description, // ✅ thêm dòng này
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
@@ -31,7 +31,7 @@ class Movie {
       posterUrl: json['posterUrl'],
       status: json['status'],
       releaseDate: json['releaseDate'],
-
+      description: json['description'] ?? "", // ✅ thêm dòng này
     );
   }
 
@@ -45,6 +45,7 @@ class Movie {
       "posterUrl": posterUrl,
       "status": status,
       "releaseDate": releaseDate,
+      "description": description, // ✅ thêm dòng này
     };
   }
 }

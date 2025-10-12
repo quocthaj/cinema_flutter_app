@@ -16,9 +16,10 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ConvexAppBar(
-      backgroundColor: ColorbuttonColor ,
-      style: TabStyle.react, // hiệu ứng đẹp hơn
+      backgroundColor: ColorbuttonColor, // màu nút chính
+      style: TabStyle.titled, // có tiêu đề dưới icon
       items: const [
+        TabItem(icon: Icons.home, title: 'Trang chủ'), // ✅ thêm trang chủ
         TabItem(icon: Icons.movie, title: 'Phim'),
         TabItem(icon: Icons.card_giftcard, title: 'Quà tặng'),
         TabItem(icon: Icons.theaters, title: 'Rạp'),
