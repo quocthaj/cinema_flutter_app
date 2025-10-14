@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "639686351889",
+    "project_id": "cinemabookingapp-afcc2",
+    "storage_bucket": "cinemabookingapp-afcc2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639686351889:android:82f53ba2c08123e88e65b0",
+        "android_client_info": {
+          "package_name": "com.example.doan_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBASqiy7WYXNugPA259XuyEgBqVzIQmR-E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

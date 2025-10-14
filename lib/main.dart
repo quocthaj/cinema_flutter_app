@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // Kiểm tra xem người dùng đã đăng nhập chưa
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
@@ -56,9 +58,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.redAccent,
-          ),
+          style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
         ),
       ),
       // Nếu đã đăng nhập thì vào Home luôn, nếu chưa thì vào Login
