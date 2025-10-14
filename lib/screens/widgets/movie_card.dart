@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../../data/mock_Data.dart';
 import '../../models/movie.dart';
-import '../movie_detail/movie_detail_screen.dart'; // 👈 Thêm dòng này để điều hướng
+import '../movie/movie_detail_screen.dart'; // 👈 Thêm dòng này để điều hướng
 import '../widgets/colors.dart';
 
 class MovieCard extends StatelessWidget {

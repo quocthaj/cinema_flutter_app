@@ -7,11 +7,11 @@ import 'custom_drawer.dart';
 import 'profile_drawer.dart';
 import '../widgets/colors.dart';
 import '../auth/login_screen.dart';
-import '../movie_detail/movie_detail_screen.dart';
+import '../movie/movie_detail_screen.dart';
+import '../movie/movie_screen.dart';
 import '../../models/movie.dart';
 import '../reward/reward_screen.dart';
-
-
+import '../theater/theaters_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,23 +23,31 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _authService = AuthService();
   int _currentIndex = 2;
-  int _selectedTabIndex = 0; // 0: Đang chiếu, 1: Sắp chiếu, 2: Khuyến av
+  bool _isLoggedIn = false;
+  bool _isLoading = true;
   String _userName = '';
   String _userEmail = '';
-  bool _isLoading = true;
+  final PageController _pageController = PageController(viewportFraction: 0.75);
+  double _currentPage = 0.0;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _pageController.addListener(() {
+      setState(() {
+        _currentPage = _pageController.page ?? 0;
+      });
+    });
   }
 
   Future<void> _loadUserData() async {
     try {
       final userData = await _authService.getCurrentUser();
       setState(() {
-        _userName = userData['userName'] ?? 'User';
+        _userName = userData['userName'] ?? 'Khách';
         _userEmail = userData['userEmail'] ?? '';
+        _isLoggedIn = userData.isNotEmpty;
         _isLoading = false;
       });
     } catch (e) {
@@ -48,47 +56,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _signOut() async {
-    bool? confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2C2C2E),
-        title: const Text('Xác nhận đăng xuất', style: TextStyle(color: Colors.white)),
-        content: const Text('Bạn có chắc chắn muốn đăng xuất?', style: TextStyle(color: Color.fromARGB(179, 146, 70, 70))),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('Đăng xuất', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
+    await _authService.signOut();
+    setState(() {
+      _isLoggedIn = false;
+      _userName = 'Khách';
+      _userEmail = '';
+    });
+  }
 
-    if (confirm == true) {
-      try {
-        await _authService.signOut();
-        if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Lỗi đăng xuất: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
+  // ======= Lọc phim nổi bật (rating > 8) =======
+  List<Movie> get featuredMovies =>
+      mockMovies.where((m) => m.rating > 8.0).toList();
+
+  // ======= Mở chi tiết phim =======
+  void _openMovieDetail(Movie movie) {
+    if (!_isLoggedIn) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      ).then((_) => _loadUserData());
+      return;
     }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => MovieDetailScreen(movie: movie)),
+    );
   }
 
   @override
@@ -96,7 +89,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: Color(0xFF1C1C1E),
-        body: Center(child: CircularProgressIndicator(color: Colors.redAccent)),
+        body: Center(
+          child: CircularProgressIndicator(color: Colors.redAccent),
+        ),
       );
     }
 
@@ -116,7 +111,14 @@ class _HomeScreenState extends State<HomeScreen> {
             builder: (context) => IconButton(
               icon: const Icon(Icons.person),
               onPressed: () {
-                Scaffold.of(context).openEndDrawer();
+                if (_isLoggedIn) {
+                  Scaffold.of(context).openEndDrawer();
+                } else {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  ).then((_) => _loadUserData());
+                }
               },
             ),
           ),
@@ -125,139 +127,91 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // ===================== BODY ======================
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // === Thanh danh mục ===
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildCategoryTab("Đang chiếu", 0),
-                _buildCategoryTab("Sắp chiếu", 1),
-                _buildCategoryTab("Khuyến mãi", 2),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // === Banner phim nổi bật ===
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.deepPurple.shade400,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // ===== Banner quảng cáo =====
+            SizedBox(
+              height: 150,
+              child: PageView(
+                controller: PageController(viewportFraction: 0.9),
                 children: [
-                  // --- Tags ---
-                  Row(
-                    children: [
-                      _buildTag("HOT", Colors.redAccent),
-                      const SizedBox(width: 8),
-                      _buildTag("IMAX", Colors.amber),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // --- Tiêu đề ---
-                  const Text(
-                    "Avatar: The Way of Water",
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "Hành trình kỳ thú dưới đại dương Pandora",
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // --- Hình ảnh phim ---
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      "lib/images/AvengersEndgame.jpg", // Thay bằng link hình ảnh thật
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // --- Rating & Thời lượng ---
-                  Row(
-                    children: const [
-                      Icon(Icons.star, color: Colors.amber, size: 18),
-                      SizedBox(width: 4),
-                      Text("8.9", style: TextStyle(color: Colors.white)),
-                      SizedBox(width: 12),
-                      Text("192 phút", style: TextStyle(color: Colors.white70)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // --- Nút đặt vé ---
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Movie avatarMovie = Movie.fromJson({
-                          'id': '1',
-                          'title': 'Avatar: The Way of Water',
-                          'genre': 'Sci-Fi',
-                          'duration': 192,
-                          'rating': 8.9,
-                          'posterUrl': "lib/images/AvengersEndgame.jpg",
-                          'status': 'now_showing',
-                          'releaseDate': '2025-12-20',
-                          'description': 'Hành trình kỳ thú dưới đại dương Pandora',
-                        });
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => MovieDetailScreen(movie: avatarMovie),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      ),
-                      child: const Text("Đặt vé ngay"),
-                    ),
-                  ),
+                  _buildBanner("lib/images/batman.jpg"),
+                  _buildBanner("lib/images/AvengersEndgame.jpg"),
+                  _buildBanner("lib/images/poster1.jpg"),
                 ],
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
 
-            // === Danh sách phim ===
-            const Text(
-              "🎬 Phim đang chiếu",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+            // ===== PHIM NỔI BẬT 3D CAROUSEL =====
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                "🔥 Phim nổi bật",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+
             SizedBox(
-              height: 500,
+              height: 400,
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: featuredMovies.length,
+                itemBuilder: (context, index) {
+                  final movie = featuredMovies[index];
+                  final scale =
+                      (1 - ((_currentPage - index).abs() * 0.2)).clamp(0.8, 1.0);
+                  final rotation = (_currentPage - index) * 0.3;
+
+                  return Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()
+                      ..rotateY(rotation)
+                      ..scale(scale, scale),
+                    child: GestureDetector(
+                      onTap: () => _openMovieDetail(movie),
+                      child: _buildFeaturedMovieCard(movie),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // ===== PHIM ĐANG CHIẾU =====
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                "🎬 Phim đang chiếu",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            SizedBox(
+              height: 320,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: mockMovies.length,
                 itemBuilder: (context, index) {
                   final movie = mockMovies[index];
                   return Padding(
-                    padding: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.only(left: 16, right: 8),
                     child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => MovieDetailScreen(movie: movie),
-                          ),
-                        );
-                      },
+                      onTap: () => _openMovieDetail(movie),
                       child: MovieCard(movie: movie),
                     ),
                   );
@@ -268,64 +222,128 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
 
-      // ===================== BOTTOM BAR ======================
+      // ===================== NAVIGATION BAR ======================
       bottomNavigationBar: BottomNavBar(
         initialIndex: _currentIndex,
         onTap: (index) {
-          if (index == 1) {
-            // Mở trang Reward
+          setState(() => _currentIndex = index);
+
+          if (index == 0) {
+            // Home
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
+            );
+          } else if (index == 1) {
+            // 👉 Chuyển sang MovieScreen
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const MovieScreen()),
+            );
+          } else if (index == 2) {
+            // Ưu đãi
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const RewardScreen()),
             );
-          } else {
-            setState(() => _currentIndex = index);
+          } else if (index == 3) {
+            // Rạp chiếu
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const TheatersScreen()),
+            );
           }
         },
       ),
-
-
     );
   }
 
-  // === Widget tab danh mục ===
-  Widget _buildCategoryTab(String title, int index) {
-    final isSelected = _selectedTabIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedTabIndex = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.redAccent : Colors.grey.shade800,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.white70,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+  // ======= Widget Banner =======
+  Widget _buildBanner(String imagePath) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Image.asset(imagePath, fit: BoxFit.cover),
       ),
     );
   }
 
-  // === Widget tag (HOT, IMAX) ===
-  Widget _buildTag(String text, Color color) {
+  // ======= Widget Thẻ Phim Nổi Bật =======
+  Widget _buildFeaturedMovieCard(Movie movie) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(8),
+        color: const Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            child: Image.asset(
+              movie.posterUrl,
+              fit: BoxFit.cover,
+              height: 250,
+              width: double.infinity,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                Text(
+                  movie.title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.star, color: Colors.amber, size: 18),
+                    const SizedBox(width: 4),
+                    Text("${movie.rating}",
+                        style: const TextStyle(color: Colors.white)),
+                    const SizedBox(width: 10),
+                    const Icon(Icons.access_time,
+                        color: Colors.white70, size: 16),
+                    const SizedBox(width: 4),
+                    Text("${movie.duration} phút",
+                        style: const TextStyle(color: Colors.white70)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () => _openMovieDetail(movie),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30)),
+                  ),
+                  child: const Text("Đặt vé",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-
-
-
-
