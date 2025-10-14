@@ -20,7 +20,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _authService = AuthService();
-  int _currentIndex = 0;
+  int _currentIndex = 2;
   int _selectedTabIndex = 0; // 0: Đang chiếu, 1: Sắp chiếu, 2: Khuyến mãi
   String _userName = '';
   String _userEmail = '';
@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF2C2C2E),
         title: const Text('Xác nhận đăng xuất', style: TextStyle(color: Colors.white)),
-        content: const Text('Bạn có chắc chắn muốn đăng xuất?', style: TextStyle(color: Colors.white70)),
+        content: const Text('Bạn có chắc chắn muốn đăng xuất?', style: TextStyle(color: Color.fromARGB(179, 146, 70, 70))),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -315,3 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+
+
+
