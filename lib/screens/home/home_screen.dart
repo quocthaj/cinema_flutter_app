@@ -9,6 +9,8 @@ import '../widgets/colors.dart';
 import '../auth/login_screen.dart';
 import '../movie_detail/movie_detail_screen.dart';
 import '../../models/movie.dart';
+import '../reward/reward_screen.dart';
+
 
 
 class HomeScreen extends StatefulWidget {
@@ -21,7 +23,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _authService = AuthService();
   int _currentIndex = 2;
-  int _selectedTabIndex = 0; // 0: Đang chiếu, 1: Sắp chiếu, 2: Khuyến mãi
+  int _selectedTabIndex = 0; // 0: Đang chiếu, 1: Sắp chiếu, 2: Khuyến av
   String _userName = '';
   String _userEmail = '';
   bool _isLoading = true;
@@ -270,11 +272,19 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: BottomNavBar(
         initialIndex: _currentIndex,
         onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          if (index == 1) {
+            // Mở trang Reward
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const RewardScreen()),
+            );
+          } else {
+            setState(() => _currentIndex = index);
+          }
         },
       ),
+
+
     );
   }
 
@@ -315,3 +325,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+
+
+
