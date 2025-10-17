@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:carousel_slider_plus/carousel_slider_plus.dart';
 import '../../services/auth_service.dart';
 import '../../data/mock_Data.dart';
+import '../../models/movie.dart';
 import '../widgets/movie_card.dart';
 import 'bottom_nav_bar.dart';
 import 'custom_drawer.dart';
@@ -9,7 +11,6 @@ import '../widgets/colors.dart';
 import '../auth/login_screen.dart';
 import '../movie/movie_detail_screen.dart';
 import '../movie/movie_screen.dart';
-import '../../models/movie.dart';
 import '../reward/reward_screen.dart';
 import '../theater/theaters_screen.dart';
 
@@ -27,17 +28,23 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String _userName = '';
   String _userEmail = '';
+
+  int _currentBanner = 0;
   final PageController _pageController = PageController(viewportFraction: 0.75);
   double _currentPage = 0.0;
+
+  final List<String> _banners = [
+    'lib/images/banner1.jpg',
+    'lib/images/banner2.jpg',
+    'lib/images/banner3.jpg',
+  ];
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
     _pageController.addListener(() {
-      setState(() {
-        _currentPage = _pageController.page ?? 0;
-      });
+      setState(() => _currentPage = _pageController.page ?? 0);
     });
   }
 
@@ -64,11 +71,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // ======= Lọc phim nổi bật (rating > 8) =======
   List<Movie> get featuredMovies =>
-      mockMovies.where((m) => m.rating > 8.0).toList();
+      mockMovies.where((m) => m.rating >= 8.0).toList();
 
-  // ======= Mở chi tiết phim =======
   void _openMovieDetail(Movie movie) {
     if (!_isLoggedIn) {
       Navigator.push(
@@ -77,7 +82,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ).then((_) => _loadUserData());
       return;
     }
-
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => MovieDetailScreen(movie: movie)),
@@ -103,13 +107,24 @@ class _HomeScreenState extends State<HomeScreen> {
         userEmail: _userEmail,
         onLogout: _signOut,
       ),
+
+      // ====== APPBAR ======
       appBar: AppBar(
-        backgroundColor: ColorbuttonColor,
-        title: Text('Xin chào, $_userName'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          "Xin chào, $_userName 👋",
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+        centerTitle: true,
         actions: [
           Builder(
             builder: (context) => IconButton(
-              icon: const Icon(Icons.person),
+              icon: const Icon(Icons.person, color: Colors.white),
               onPressed: () {
                 if (_isLoggedIn) {
                   Scaffold.of(context).openEndDrawer();
@@ -125,40 +140,72 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      // ===================== BODY ======================
+      // ====== BODY ======
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ===== Banner quảng cáo =====
-            SizedBox(
-              height: 150,
-              child: PageView(
-                controller: PageController(viewportFraction: 0.9),
-                children: [
-                  _buildBanner("lib/images/batman.jpg"),
-                  _buildBanner("lib/images/AvengersEndgame.jpg"),
-                  _buildBanner("lib/images/poster1.jpg"),
-                ],
-              ),
+            // 🔥 Banner Auto Slide
+            Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                CarouselSlider(
+                  options: CarouselOptions(
+                    autoPlay: true,
+                    height: 180,
+                    enlargeCenterPage: true,
+                    viewportFraction: 0.9,
+                    autoPlayInterval: const Duration(seconds: 4),
+                    onPageChanged: (index, _) {
+                      setState(() => _currentBanner = index);
+                    },
+                  ),
+                  items: _banners.map((img) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        img,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      ),
+                    );
+                  }).toList(),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: _banners.asMap().entries.map((entry) {
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: _currentBanner == entry.key ? 10 : 6,
+                      height: 6,
+                      margin:
+                          const EdgeInsets.symmetric(vertical: 8, horizontal: 3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _currentBanner == entry.key
+                            ? Colors.redAccent
+                            : Colors.white38,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 20),
 
-            // ===== PHIM NỔI BẬT 3D CAROUSEL =====
+            // 🎬 PHIM NỔI BẬT
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 "🔥 Phim nổi bật",
                 style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                    fontSize: 22,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
             SizedBox(
               height: 400,
@@ -185,21 +232,20 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 24),
 
-            // ===== PHIM ĐANG CHIẾU =====
+            // 🎥 PHIM ĐANG CHIẾU
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                "🎬 Phim đang chiếu",
+                "🎥 Phim đang chiếu",
                 style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                    fontSize: 22,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
             SizedBox(
               height: 320,
@@ -209,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemBuilder: (context, index) {
                   final movie = mockMovies[index];
                   return Padding(
-                    padding: const EdgeInsets.only(left: 16, right: 8),
+                    padding: const EdgeInsets.only(left: 16),
                     child: GestureDetector(
                       onTap: () => _openMovieDetail(movie),
                       child: MovieCard(movie: movie),
@@ -218,81 +264,56 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ),
+            const SizedBox(height: 30),
           ],
         ),
       ),
 
-      // ===================== NAVIGATION BAR ======================
+      // ====== BOTTOM NAV ======
       bottomNavigationBar: BottomNavBar(
         initialIndex: _currentIndex,
         onTap: (index) {
-          setState(() => _currentIndex = index);
-
           if (index == 0) {
-            // Home
             Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const HomeScreen()),
-            );
+                context, MaterialPageRoute(builder: (_) => const MovieScreen()));
           } else if (index == 1) {
-            // 👉 Chuyển sang MovieScreen
             Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const MovieScreen()),
-            );
-          } else if (index == 2) {
-            // Ưu đãi
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const RewardScreen()),
-            );
+                context, MaterialPageRoute(builder: (_) => const RewardScreen()));
           } else if (index == 3) {
-            // Rạp chiếu
             Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const TheatersScreen()),
-            );
+                context, MaterialPageRoute(builder: (_) => const TheatersScreen()));
+          } else {
+            setState(() => _currentIndex = index);
           }
         },
       ),
     );
   }
 
-  // ======= Widget Banner =======
-  Widget _buildBanner(String imagePath) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Image.asset(imagePath, fit: BoxFit.cover),
-      ),
-    );
-  }
-
-  // ======= Widget Thẻ Phim Nổi Bật =======
+  // ====== Thẻ phim nổi bật ======
   Widget _buildFeaturedMovieCard(Movie movie) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF2C2C2E),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withOpacity(0.5),
             blurRadius: 12,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         children: [
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
             child: Image.asset(
               movie.posterUrl,
-              fit: BoxFit.cover,
               height: 250,
               width: double.infinity,
+              fit: BoxFit.cover,
             ),
           ),
           Padding(
@@ -303,10 +324,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   movie.title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 6),
                 Row(
@@ -329,15 +349,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () => _openMovieDetail(movie),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.redAccent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 12),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
+                        borderRadius: BorderRadius.circular(20)),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                   ),
-                  child: const Text("Đặt vé",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: const Text("🎟️ Đặt vé",
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),

@@ -55,19 +55,6 @@ final List<Movie> mockMovies = [
     description: "Elsa và Anna dấn thân vào một cuộc phiêu lưu mới vượt ra ngoài Arendelle.",
   ),
 
-  // 5. Phim Đang chiếu (Kinh dị)
-  Movie(
-    id: "5",
-    title: "Lời Nguyền Sa Mạc",
-    genre: "Horror",
-    duration: 95,
-    rating: 6.5,
-    posterUrl: "lib/images/horror1.jpg", // Thay bằng ảnh thực tế
-    status: "now_showing",
-    releaseDate: "2024-10-31",
-    description: "Một nhóm bạn khám phá ra một bí mật cổ xưa bị chôn vùi dưới cát.",
-  ),
-
   // 6. Phim Sắp chiếu (Hài hước)
   Movie(
     id: "6",
@@ -107,19 +94,7 @@ final List<Movie> mockMovies = [
     description: "Phi hành đoàn khám phá một hành tinh mới với những sinh vật kỳ bí.",
   ),
 
-  // 9. Phim Đang chiếu (Phần tiếp theo của phim nổi bật)
-  Movie(
-    id: "9",
-    title: "Tử Chiến Trên Không II",
-    genre: "Action",
-    duration: 125,
-    rating: 8.9, // Rating cao để xuất hiện ở mục nổi bật
-    posterUrl: "lib/images/poster2.jpg", // Thay bằng ảnh thực tế
-    status: "now_showing",
-    releaseDate: "2025-10-10",
-    description: "Phần tiếp theo gay cấn, trận chiến không gian mở rộng.",
-  ),
-
+ 
   // 10. Phim Đang chiếu (Cổ trang)
   Movie(
     id: "10",
