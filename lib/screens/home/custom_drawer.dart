@@ -1,4 +1,6 @@
+import '../reward/reward_screen.dart';
 import 'package:flutter/material.dart';
+import '../news/news_and_promotions_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
@@ -36,12 +38,26 @@ class CustomDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.discount),
             title: const Text("Khuyến mãi"),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const NewsAndPromotionsPage(),
+                ),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.card_giftcard),
             title: const Text("Quà tặng"),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RewardScreen(),
+                ),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.contact_mail),
