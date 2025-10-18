@@ -4,6 +4,7 @@ import '../home/bottom_nav_bar.dart';
 import '../home/home_screen.dart';
 import '../movie/movie_screen.dart';
 import '../theater/theaters_screen.dart';
+import '../news/news_and_promotions_screen.dart';
 import 'reward_details.dart';
 
 class RewardScreen extends StatefulWidget {
@@ -15,7 +16,7 @@ class RewardScreen extends StatefulWidget {
 
 class _RewardScreenState extends State<RewardScreen> {
   int _currentIndex = 1; // Mặc định tab "Quà tặng"
-  
+
   final List<Map<String, dynamic>> _rewards = [
     {'title': '1 Vé xem phim miễn phí', 'points': 500, 'image': 'lib/images/free_ticket.jpg'},
     {'title': 'Combo bắp + nước', 'points': 300, 'image': 'lib/images/popcorn_combo.jpg'},
@@ -80,7 +81,7 @@ class _RewardScreenState extends State<RewardScreen> {
         ),
       ),
 
-      // ✅ Thêm điều hướng thống nhất
+      // ✅ Thanh điều hướng dưới
       bottomNavigationBar: BottomNavBar(
         initialIndex: _currentIndex,
         onTap: (index) {
@@ -91,7 +92,7 @@ class _RewardScreenState extends State<RewardScreen> {
               MaterialPageRoute(builder: (_) => const MovieScreen()),
             );
           } else if (index == 1) {
-            // Trang hiện tại (Quà tặng)
+            // Trang hiện tại: Quà tặng
           } else if (index == 2) {
             Navigator.pushReplacement(
               context,
@@ -103,8 +104,9 @@ class _RewardScreenState extends State<RewardScreen> {
               MaterialPageRoute(builder: (_) => const TheatersScreen()),
             );
           } else if (index == 4) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("🎫 Tính năng khuyến mãi đang phát triển!")),
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const NewsAndPromotionsPage()),
             );
           }
         },

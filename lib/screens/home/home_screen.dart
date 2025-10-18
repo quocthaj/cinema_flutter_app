@@ -13,6 +13,7 @@ import '../movie/movie_detail_screen.dart';
 import '../movie/movie_screen.dart';
 import '../reward/reward_screen.dart';
 import '../theater/theaters_screen.dart';
+import '../news/news_and_promotions_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,8 +25,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _authService = AuthService();
   int _currentIndex = 2;
+
   bool _isLoggedIn = false;
   bool _isLoading = true;
+
   String _userName = '';
   String _userEmail = '';
 
@@ -152,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 CarouselSlider(
                   options: CarouselOptions(
                     autoPlay: true,
-                    height: 180,
+                    height: 200,
                     enlargeCenterPage: true,
                     viewportFraction: 0.9,
                     autoPlayInterval: const Duration(seconds: 4),
@@ -275,15 +278,26 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: (index) {
           if (index == 0) {
             Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (_) => const MovieScreen()));
+              context,
+              MaterialPageRoute(builder: (_) => const MovieScreen()),
+            );
           } else if (index == 1) {
             Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (_) => const RewardScreen()));
+              context,
+              MaterialPageRoute(builder: (_) => const RewardScreen()),
+            );
+          } else if (index == 2) {
+            // Trang hiện tại
           } else if (index == 3) {
             Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (_) => const TheatersScreen()));
-          } else {
-            setState(() => _currentIndex = index);
+              context,
+              MaterialPageRoute(builder: (_) => const TheatersScreen()),
+            );
+          } else if (index == 4) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const NewsAndPromotionsPage()),
+            );
           }
         },
       ),

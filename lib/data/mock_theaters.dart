@@ -19,7 +19,7 @@ final List<Theater> mockTheaters = [
     id: '1',
     name: 'CGV Vincom Nguyễn Chí Thanh',
     address: '54A Nguyễn Chí Thanh, Hà Nội',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/5b/CGV_logo.svg',
+    logoUrl: "lib/images/nch.jpg",
     description:
         'Rạp CGV hiện đại với công nghệ 4DX, IMAX và dịch vụ cao cấp tại trung tâm Hà Nội.',
   ),
@@ -27,7 +27,7 @@ final List<Theater> mockTheaters = [
     id: '2',
     name: 'Galaxy Nguyễn Du',
     address: '116 Nguyễn Du, Quận 1, TP.HCM',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/vi/4/48/Galaxy_Cinema_logo.png',
+    logoUrl: "lib/images/nd.jpg",
     description:
         'Rạp Galaxy nổi tiếng với giá vé phải chăng, chất lượng âm thanh và hình ảnh tuyệt hảo.',
   ),
@@ -35,7 +35,7 @@ final List<Theater> mockTheaters = [
     id: '3',
     name: 'Lotte Cinema Gò Vấp',
     address: '242 Nguyễn Văn Lượng, Gò Vấp, TP.HCM',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d8/Lotte_Cinema_logo.svg',
+    logoUrl: "lib/images/gv.jpg",
     description:
         'Rạp Lotte có không gian rộng, phục vụ tận tình và công nghệ chiếu phim tiên tiến.',
   ),
@@ -43,7 +43,7 @@ final List<Theater> mockTheaters = [
     id: '4',
     name: 'Beta Cineplex Mỹ Đình',
     address: 'Tầng 3, TTTM The Garden, Mỹ Đình, Hà Nội',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/vi/e/e8/Beta_Cineplex_logo.png',
+    logoUrl: "lib/images/md.jpg",
     description:
         'Rạp Beta hướng tới giới trẻ, giá vé rẻ, phong cách trẻ trung và nhiều ưu đãi hấp dẫn.',
   ),

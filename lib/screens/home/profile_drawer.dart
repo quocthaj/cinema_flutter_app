@@ -1,3 +1,4 @@
+import '../reward/reward_screen.dart';
 import 'package:flutter/material.dart';
 
 /// 🔹 BẢN GỐC (giữ nguyên)
@@ -37,7 +38,14 @@ class ProfileDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.policy, color: Colors.white),
             title: const Text("Chính sách tích điểm", style: TextStyle(color: Colors.white)),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RewardScreen()
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -91,7 +99,14 @@ class ProfileDrawerDynamic extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.policy, color: Colors.white),
             title: const Text("Chính sách tích điểm", style: TextStyle(color: Colors.white)),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RewardScreen()
+                ),
+              );
+            },
           ),
           const Divider(color: Colors.white24),
           ListTile(
