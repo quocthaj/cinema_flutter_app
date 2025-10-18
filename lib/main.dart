@@ -61,8 +61,10 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
+
+      home: const HomeScreen(),
       // Nếu đã đăng nhập thì vào Home luôn, nếu chưa thì vào Login
-      home: isLoggedIn ? const HomeScreen() : const LoginScreen(),
+    //  home: isLoggedIn ? const HomeScreen() : const LoginScreen(),
     );
   }
 }
