@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../config/theme.dart';
 import '../../data/mock_theaters.dart';
 import 'theater_detail_screen.dart';
 import '../home/bottom_nav_bar.dart';
 import '../movie/movie_screen.dart';
 import '../reward/reward_screen.dart';
 import '../home/home_screen.dart';
-import '../widgets/colors.dart';
+import '../news/news_and_promotions_screen.dart';
 
 class TheatersScreen extends StatefulWidget {
   const TheatersScreen({super.key});
@@ -20,13 +21,10 @@ class _TheatersScreenState extends State<TheatersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1C1C1E),
       appBar: AppBar(
         title: const Text(
           "🎥 Danh sách rạp chiếu",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        backgroundColor: ColorbuttonColor,
         centerTitle: true,
       ),
       body: ListView.builder(
@@ -35,9 +33,7 @@ class _TheatersScreenState extends State<TheatersScreen> {
         itemBuilder: (context, index) {
           final theater = mockTheaters[index];
           return Card(
-            color: const Color(0xFF2C2C2E),
             elevation: 4,
-            shadowColor: Colors.black54,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
@@ -52,18 +48,17 @@ class _TheatersScreenState extends State<TheatersScreen> {
               title: Text(
                 theater.name,
                 style: const TextStyle(
-                  color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               subtitle: Text(
                 theater.address,
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                style: Theme.of(context).textTheme.bodyMedium,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              trailing: const Icon(Icons.arrow_forward_ios,
-                  color: Colors.white54, size: 18),
+              trailing: Icon(Icons.arrow_forward_ios,
+                  color: AppTheme.textSecondaryColor, size: 18),
               onTap: () {
                 Navigator.push(
                   context,
@@ -101,10 +96,9 @@ class _TheatersScreenState extends State<TheatersScreen> {
           } else if (index == 3) {
             // Ở trang hiện tại (Rạp)
           } else if (index == 4) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Tính năng khuyến mãi đang phát triển!"),
-              ),
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const NewsAndPromotionsPage()),
             );
           }
         },

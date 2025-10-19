@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../config/theme.dart';
 import '../../models/movie.dart';
-import '../widgets/colors.dart'; // file màu của bạn
 
 class BookingScreen extends StatefulWidget {
   final Movie movie;
@@ -15,9 +15,9 @@ class _BookingScreenState extends State<BookingScreen> {
   String? selectedDate;
   String? selectedTime;
   List<String> selectedSeats = [];
-  
+
   // Giả lập các ghế đã bán để thêm tính năng
-  final List<String> soldSeats = ["A3", "B1", "C5"]; 
+  final List<String> soldSeats = ["A3", "B1", "C5"];
 
   final List<String> availableDates = [
     "11/10",
@@ -37,9 +37,21 @@ class _BookingScreenState extends State<BookingScreen> {
 
   // Ghế được sắp xếp theo 5 cột và 3 hàng (A, B, C)
   final List<String> seatList = [
-    "A1", "A2", "A3", "A4", "A5",
-    "B1", "B2", "B3", "B4", "B5",
-    "C1", "C2", "C3", "C4", "C5",
+    "A1",
+    "A2",
+    "A3",
+    "A4",
+    "A5",
+    "B1",
+    "B2",
+    "B3",
+    "B4",
+    "B5",
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
   ];
 
   // =======================================================
@@ -49,8 +61,8 @@ class _BookingScreenState extends State<BookingScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _legendItem(datve, "Đang chọn"),
-        _legendItem(Colors.grey[700]!, "Trống"),
+        _legendItem(AppTheme.primaryColor, "Đang chọn"),
+        _legendItem(AppTheme.fieldColor, "Trống"),
         _legendItem(Colors.red[900]!, "Đã bán"),
       ],
     );
@@ -70,7 +82,7 @@ class _BookingScreenState extends State<BookingScreen> {
         const SizedBox(width: 8),
         Text(
           label,
-          style: const TextStyle(color: Colors.white70, fontSize: 14),
+          style: TextStyle(color: AppTheme.textSecondaryColor, fontSize: 14),
         ),
       ],
     );
@@ -80,24 +92,27 @@ class _BookingScreenState extends State<BookingScreen> {
     return Column(
       children: [
         // 1. Màn hình Chiếu
-        const Text(
+        Text(
           "SCREEN",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: Theme.of(context)
+              .textTheme
+              .bodyLarge
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
         Container(
           height: 10,
           margin: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
-            color: datve.withOpacity(0.8), // Màu đỏ/accent
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),
-            boxShadow: [
-              BoxShadow(
-                color: datve.withOpacity(0.5),
-                blurRadius: 10,
-                spreadRadius: 2,
-              )
-            ]
-          ),
+              color: AppTheme.primaryColor.withOpacity(0.8), // Màu đỏ/accent
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(5)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withOpacity(0.5),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                )
+              ]),
         ),
         const SizedBox(height: 20),
 
@@ -106,66 +121,74 @@ class _BookingScreenState extends State<BookingScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7, // Tăng lên 7 cột để thêm khoảng trống và nhãn hàng
+            crossAxisCount:
+                7, // Tăng lên 7 cột để thêm khoảng trống và nhãn hàng
             crossAxisSpacing: 8,
             mainAxisSpacing: 10,
             childAspectRatio: 1.0, // Tỉ lệ 1:1 cho ghế
           ),
-          itemCount: seatList.length + 3, // 3 hàng, mỗi hàng thêm 2 ô trống + 1 nhãn hàng
+          itemCount: seatList.length +
+              3, // 3 hàng, mỗi hàng thêm 2 ô trống + 1 nhãn hàng
           itemBuilder: (context, index) {
             // Tính toán vị trí trong seatList (bỏ qua các vị trí nhãn)
             // Lưới 7 cột: Nhãn | Ghế | Ghế | Ghế | Ghế | Ghế | Nhãn
             int row = index ~/ 7;
             int col = index % 7;
-            
+
             // Vị trí cột cho Nhãn (cột 0) và khoảng trống (cột 6)
             if (col == 0) {
               return Center(
                 child: Text(
                   String.fromCharCode('A'.codeUnitAt(0) + row),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               );
             }
             if (col == 6) {
-                return const SizedBox.shrink(); // Khoảng trống bên phải
+              return const SizedBox.shrink(); // Khoảng trống bên phải
             }
 
             // Tính toán index thực tế trong seatList (5 ghế mỗi hàng)
             // Lưới 7 cột: [Nhãn, G1, G2, G3, G4, G5, Trống]
             // index thực = (hàng * 5) + (cột - 1)
             int actualSeatIndex = row * 5 + (col - 1);
-            if (actualSeatIndex >= seatList.length) return const SizedBox.shrink();
+            if (actualSeatIndex >= seatList.length)
+              return const SizedBox.shrink();
 
             final seat = seatList[actualSeatIndex];
             final bool isSelected = selectedSeats.contains(seat);
             final bool isSold = soldSeats.contains(seat);
-            
+
             Color seatColor;
             if (isSold) {
               seatColor = Colors.red[900]!; // Ghế đã bán
             } else if (isSelected) {
-              seatColor = datve; // Ghế đang chọn
+              seatColor = AppTheme.primaryColor; // Ghế đang chọn
             } else {
-              seatColor = Colors.grey[700]!; // Ghế trống
+              seatColor = AppTheme.fieldColor; // Ghế trống
             }
 
             return GestureDetector(
-              onTap: isSold ? null : () { // Không chọn được ghế đã bán
-                setState(() {
-                  if (isSelected) {
-                    selectedSeats.remove(seat);
-                  } else {
-                    selectedSeats.add(seat);
-                  }
-                });
-              },
+              onTap: isSold
+                  ? null
+                  : () {
+                      // Không chọn được ghế đã bán
+                      setState(() {
+                        if (isSelected) {
+                          selectedSeats.remove(seat);
+                        } else {
+                          selectedSeats.add(seat);
+                        }
+                      });
+                    },
               child: Container(
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: seatColor,
                   // Mô phỏng hình dạng ghế (bo góc trên)
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(8)),
                   border: Border.all(
                     color: isSelected ? Colors.white : Colors.transparent,
                     width: isSelected ? 2 : 0,
@@ -185,25 +208,21 @@ class _BookingScreenState extends State<BookingScreen> {
         ),
 
         const SizedBox(height: 20),
-        
+
         // 3. Chú thích Ghế
         _buildSeatLegend(),
       ],
     );
   }
   // =======================================================
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1C1C1E), // Darker background
       appBar: AppBar(
-        backgroundColor: datve,
         title: Text(
           "Đặt vé - ${widget.movie.title}",
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -230,18 +249,17 @@ class _BookingScreenState extends State<BookingScreen> {
                       children: [
                         Text(
                           widget.movie.title,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontSize: 20),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
                           "${widget.movie.duration} phút | ${widget.movie.genre}",
-                          style: const TextStyle(color: Colors.white70),
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
                     ),
@@ -257,17 +275,21 @@ class _BookingScreenState extends State<BookingScreen> {
                 spacing: 12, // Tăng spacing
                 children: availableDates.map((date) {
                   final bool isSelected = date == selectedDate;
-                  return ActionChip( // Dùng ActionChip
+                  return ActionChip(
+                    // Dùng ActionChip
                     label: Text(date),
                     onPressed: () {
                       setState(() => selectedDate = date);
                     },
-                    backgroundColor: isSelected ? datve : Colors.grey[850],
+                    backgroundColor: isSelected
+                        ? AppTheme.primaryColor
+                        : AppTheme.fieldColor,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: AppTheme.textPrimaryColor,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
-                    side: BorderSide(color: isSelected ? Colors.transparent : Colors.white12),
+                    side: BorderSide.none,
                   );
                 }).toList(),
               ),
@@ -286,12 +308,15 @@ class _BookingScreenState extends State<BookingScreen> {
                     onPressed: () {
                       setState(() => selectedTime = time);
                     },
-                    backgroundColor: isSelected ? datve : Colors.grey[850],
+                    backgroundColor: isSelected
+                        ? AppTheme.primaryColor
+                        : AppTheme.fieldColor,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: AppTheme.textPrimaryColor,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
-                    side: BorderSide(color: isSelected ? Colors.transparent : Colors.white12),
+                    side: BorderSide.none,
                   );
                 }).toList(),
               ),
@@ -301,11 +326,11 @@ class _BookingScreenState extends State<BookingScreen> {
               // --- CHỌN GHẾ MỚI ---
               _buildSectionTitle("Chọn ghế ngồi"),
               const SizedBox(height: 20),
-              
+
               _buildSeatGrid(), // Gọi widget lưới ghế mới
 
               const SizedBox(height: 30),
-              
+
               // --- TỔNG KẾT & XÁC NHẬN ---
               _buildSummaryAndConfirmation(),
             ],
@@ -314,12 +339,12 @@ class _BookingScreenState extends State<BookingScreen> {
       ),
     );
   }
-  
+
   // Widget tiêu đề section
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
     );
   }
 
@@ -328,20 +353,26 @@ class _BookingScreenState extends State<BookingScreen> {
     final int seatCount = selectedSeats.length;
     final double ticketPrice = 100000; // Giả sử giá vé
     final double totalPrice = seatCount * ticketPrice;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               "Ghế đã chọn:",
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+              style:
+                  TextStyle(color: AppTheme.textSecondaryColor, fontSize: 16),
             ),
             Text(
               selectedSeats.isEmpty ? "Chưa chọn" : selectedSeats.join(", "),
-              style: TextStyle(color: selectedSeats.isEmpty ? Colors.white70 : datve, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: selectedSeats.isEmpty
+                      ? AppTheme.textSecondaryColor
+                      : AppTheme.primaryColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -349,27 +380,34 @@ class _BookingScreenState extends State<BookingScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               "Tổng tiền:",
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontSize: 18),
             ),
             Text(
               "${totalPrice.toStringAsFixed(0)} VNĐ",
-              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontSize: 18),
             ),
           ],
         ),
         const SizedBox(height: 20),
-        
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-              if (selectedDate == null || selectedTime == null || selectedSeats.isEmpty) {
+              if (selectedDate == null ||
+                  selectedTime == null ||
+                  selectedSeats.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Vui lòng chọn đủ ngày, giờ và ghế!"),
-                    backgroundColor: Colors.redAccent,
+                  SnackBar(
+                    content: const Text("Vui lòng chọn đủ ngày, giờ và ghế!"),
+                    backgroundColor: AppTheme.errorColor,
                   ),
                 );
                 return;
@@ -385,19 +423,11 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: datve,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
             child: const Text(
               "Xác nhận đặt vé",
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
               ),
             ),
           ),

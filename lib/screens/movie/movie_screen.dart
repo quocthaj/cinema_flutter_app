@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../config/theme.dart';
 import '../../data/mock_Data.dart';
 import '../../models/movie.dart';
 import '../../services/auth_service.dart';
@@ -7,8 +8,8 @@ import '../movie/movie_detail_screen.dart';
 import '../home/home_screen.dart';
 import '../reward/reward_screen.dart';
 import '../theater/theaters_screen.dart';
-import '../widgets/colors.dart';
 import '../home/bottom_nav_bar.dart';
+import '../news/news_and_promotions_screen.dart';
 
 class MovieScreen extends StatefulWidget {
   const MovieScreen({super.key});
@@ -59,20 +60,16 @@ class _MovieScreenState extends State<MovieScreen>
         mockMovies.where((m) => m.status == 'coming_soon').toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1C1C1E),
       appBar: AppBar(
-        backgroundColor: ColorbuttonColor,
         title: const Text(
           "🎬 Danh sách phim",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          indicatorColor: AppTheme.primaryColor,
+          labelStyle:
+              const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           tabs: const [
             Tab(text: "Phim đang chiếu"),
             Tab(text: "Phim sắp chiếu"),
@@ -112,8 +109,9 @@ class _MovieScreenState extends State<MovieScreen>
             );
           } else if (index == 4) {
             // Tab khuyến mãi (nếu có)
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Tính năng đang phát triển!")),
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const NewsAndPromotionsPage()),
             );
           }
         },

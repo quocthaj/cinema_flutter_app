@@ -1,5 +1,75 @@
-import 'package:doan_mobile/screens/widgets/colors.dart';
 import 'package:flutter/material.dart';
+import '../../../config/theme.dart';
+
+// Custom Clipper cho ticket shape với răng cưa 2 bên
+class TicketClipper extends CustomClipper<Path> {
+  final double notchRadius;
+  final int notchCount;
+
+  TicketClipper({this.notchRadius = 10, this.notchCount = 5});
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    const double cornerRadius = 12.0;
+    
+    // Top left corner
+    path.moveTo(0, cornerRadius);
+    path.quadraticBezierTo(0, 0, cornerRadius, 0);
+    
+    // Top edge
+    path.lineTo(size.width - cornerRadius, 0);
+    
+    // Top right corner
+    path.quadraticBezierTo(size.width, 0, size.width, cornerRadius);
+    
+    // Right edge with notches (răng cưa)
+    final double notchSpacing = (size.height - cornerRadius * 2) / (notchCount + 1);
+    for (int i = 0; i <= notchCount; i++) {
+      final double y = cornerRadius + notchSpacing * i + notchSpacing / 2;
+      if (i < notchCount) {
+        path.lineTo(size.width, y - notchRadius);
+        path.arcToPoint(
+          Offset(size.width, y + notchRadius),
+          radius: Radius.circular(notchRadius),
+          clockwise: false,
+        );
+      }
+    }
+    
+    // Bottom right corner
+    path.lineTo(size.width, size.height - cornerRadius);
+    path.quadraticBezierTo(
+        size.width, size.height, size.width - cornerRadius, size.height);
+    
+    // Bottom edge
+    path.lineTo(cornerRadius, size.height);
+    
+    // Bottom left corner
+    path.quadraticBezierTo(0, size.height, 0, size.height - cornerRadius);
+    
+    // Left edge with notches (răng cưa)
+    for (int i = notchCount; i >= 0; i--) {
+      final double y = cornerRadius + notchSpacing * i + notchSpacing / 2;
+      if (i < notchCount) {
+        path.lineTo(0, y + notchRadius);
+        path.arcToPoint(
+          Offset(0, y - notchRadius),
+          radius: Radius.circular(notchRadius),
+          clockwise: false,
+        );
+      }
+    }
+    
+    path.lineTo(0, cornerRadius);
+    path.close();
+    
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
 
 class ServicePlanScreen extends StatefulWidget {
   final int initialIndex;
@@ -34,17 +104,31 @@ class _ServicePlanScreenState extends State<ServicePlanScreen> {
     super.dispose();
   }
 
+  // Helper method để lấy icon theo index
+  IconData _getServiceIcon(int index) {
+    switch (index) {
+      case 0:
+        return Icons.event_seat; // Thuê rạp
+      case 1:
+        return Icons.campaign; // Quảng cáo
+      case 2:
+        return Icons.card_giftcard; // Quà tặng
+      case 3:
+        return Icons.groups; // Vé nhóm
+      default:
+        return Icons.local_activity;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final service = widget.services[_currentServiceIndex];
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: ColorbuttonColor,
-        title: const Text('Lập kế hoạch cùng Lotte Cinema'),
+        backgroundColor: AppTheme.primaryColor,
+        title: const Text('Lập kế hoạch cùng TNT Cinema'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -52,9 +136,9 @@ class _ServicePlanScreenState extends State<ServicePlanScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // --- Carousel dịch vụ ---
+            // --- Carousel dịch vụ với Ticket Shape ---
             SizedBox(
-              height: 180,
+              height: 200,
               child: PageView.builder(
                 controller: _pageController,
                 itemCount: widget.services.length,
@@ -65,45 +149,158 @@ class _ServicePlanScreenState extends State<ServicePlanScreen> {
                 },
                 itemBuilder: (context, index) {
                   final item = widget.services[index];
-                  return AnimatedContainer(
+                  final bool isActive = index == _currentServiceIndex;
+                  final List<Color> gradientColors = item['gradientColors'] ?? 
+                      [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.7)];
+                  
+                  return AnimatedScale(
+                    scale: isActive ? 1.0 : 0.9,
                     duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: index == _currentServiceIndex
-                            ? Colors.redAccent
-                            : Colors.transparent,
-                        width: 2,
-                      ),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item['title'],
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.redAccent,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Expanded(
-                          child: Text(
-                            item['description'],
-                            style: const TextStyle(
-                              color: Colors.black87,
-                              height: 1.5,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      child: ClipPath(
+                        clipper: TicketClipper(notchRadius: 8, notchCount: 6),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: gradientColors,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: gradientColors[0].withOpacity(0.4),
+                                blurRadius: isActive ? 15 : 8,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              // Decorative pattern
+                              Positioned(
+                                right: -20,
+                                top: -20,
+                                child: Icon(
+                                  Icons.local_activity,
+                                  size: 100,
+                                  color: Colors.white.withOpacity(0.1),
+                                ),
+                              ),
+                              
+                              // Content
+                              Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Icon dịch vụ
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        _getServiceIcon(index),
+                                        color: Colors.white,
+                                        size: 28,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    
+                                    // Title
+                                    Text(
+                                      item['title'],
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        letterSpacing: 0.5,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    
+                                    // Description
+                                    Expanded(
+                                      child: Text(
+                                        item['description'],
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.9),
+                                          fontSize: 13,
+                                          height: 1.4,
+                                        ),
+                                        maxLines: 4,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    
+                                    // Badge "Chi tiết"
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.3),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Text(
+                                            'Chi tiết',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            Icons.arrow_forward_ios,
+                                            color: Colors.white,
+                                            size: 12,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   );
                 },
+              ),
+            ),
+
+            // Indicator dots
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                widget.services.length,
+                (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: _currentServiceIndex == index ? 24 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _currentServiceIndex == index
+                        ? (widget.services[index]['gradientColors']?[0] ?? AppTheme.primaryColor)
+                        : Colors.grey.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
               ),
             ),
 
@@ -215,7 +412,7 @@ class _ServicePlanScreenState extends State<ServicePlanScreen> {
                 Checkbox(value: false, onChanged: (_) {}),
                 const Expanded(
                   child: Text(
-                    'Tôi đồng ý cung cấp thông tin cho LOTTE Cinema để phục vụ nhu cầu đăng ký dịch vụ của tôi.',
+                    'Tôi đồng ý cung cấp thông tin cho TNT Cinema để phục vụ nhu cầu đăng ký dịch vụ của tôi.',
                     style: TextStyle(fontSize: 13, color: Colors.black87),
                   ),
                 ),
@@ -226,13 +423,13 @@ class _ServicePlanScreenState extends State<ServicePlanScreen> {
             ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorbuttonColor,
+                backgroundColor: AppTheme.primaryColor,
                 minimumSize: const Size(double.infinity, 48),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text('GỬI', style: TextStyle(color: Colors.white)),
+              child: const Text('GỬI'),
             ),
           ],
         ),

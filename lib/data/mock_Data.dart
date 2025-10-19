@@ -24,7 +24,8 @@ final List<Movie> mockMovies = [
     posterUrl: "lib/images/AvengersEndgame.jpg",
     status: "now_showing",
     releaseDate: "2019-04-26",
-    description: "Trận chiến cuối cùng giữa Avengers và Thanos, hy vọng cuối cùng của vũ trụ.",
+    description:
+        "Trận chiến cuối cùng giữa Avengers và Thanos, hy vọng cuối cùng của vũ trụ.",
   ),
 
   // 3. Phim Sắp chiếu
@@ -37,7 +38,8 @@ final List<Movie> mockMovies = [
     posterUrl: "lib/images/batman.jpg",
     status: "coming_soon",
     releaseDate: "2025-11-01",
-    description: "Bruce Wayne đối đầu kẻ thù nguy hiểm nhất trong thành phố tội lỗi Gotham.",
+    description:
+        "Bruce Wayne đối đầu kẻ thù nguy hiểm nhất trong thành phố tội lỗi Gotham.",
   ),
 
   // --- THÊM MỚI ---
@@ -52,7 +54,8 @@ final List<Movie> mockMovies = [
     posterUrl: "lib/images/frozen2.jpg", // Thay bằng ảnh thực tế
     status: "now_showing",
     releaseDate: "2019-11-22",
-    description: "Elsa và Anna dấn thân vào một cuộc phiêu lưu mới vượt ra ngoài Arendelle.",
+    description:
+        "Elsa và Anna dấn thân vào một cuộc phiêu lưu mới vượt ra ngoài Arendelle.",
   ),
 
   // 6. Phim Sắp chiếu (Hài hước)
@@ -65,7 +68,8 @@ final List<Movie> mockMovies = [
     posterUrl: "lib/images/comedy1.jpg", // Thay bằng ảnh thực tế
     status: "coming_soon",
     releaseDate: "2025-12-20",
-    description: "Cuộc chiến không hồi kết giữa hai gia đình hàng xóm láng giềng.",
+    description:
+        "Cuộc chiến không hồi kết giữa hai gia đình hàng xóm láng giềng.",
   ),
 
   // 7. Phim Đang chiếu (Lãng mạn)
@@ -78,9 +82,10 @@ final List<Movie> mockMovies = [
     posterUrl: "lib/images/romance1.jpg", // Thay bằng ảnh thực tế
     status: "now_showing",
     releaseDate: "2024-07-01",
-    description: "Một câu chuyện tình yêu vượt thời gian và những hiểu lầm lãng mạn.",
+    description:
+        "Một câu chuyện tình yêu vượt thời gian và những hiểu lầm lãng mạn.",
   ),
-  
+
   // 8. Phim Sắp chiếu (Khoa học viễn tưởng)
   Movie(
     id: "8",
@@ -91,10 +96,10 @@ final List<Movie> mockMovies = [
     posterUrl: "lib/images/scifi1.jpg", // Thay bằng ảnh thực tế
     status: "coming_soon",
     releaseDate: "2026-01-15",
-    description: "Phi hành đoàn khám phá một hành tinh mới với những sinh vật kỳ bí.",
+    description:
+        "Phi hành đoàn khám phá một hành tinh mới với những sinh vật kỳ bí.",
   ),
 
- 
   // 10. Phim Đang chiếu (Cổ trang)
   Movie(
     id: "10",

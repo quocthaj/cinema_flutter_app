@@ -32,14 +32,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _signUp() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
+
       try {
         await _authService.signUpWithEmail(
           _emailController.text.trim(),
           _passwordController.text,
           _nameController.text.trim(),
         );
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -47,7 +47,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -90,9 +90,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   size: 80,
                   color: Colors.redAccent,
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Tiêu đề
                 const Text(
                   'Đăng Ký',
@@ -103,9 +103,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 Text(
                   'Tạo tài khoản mới để bắt đầu',
                   style: TextStyle(
@@ -114,9 +114,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Name field
                 TextFormField(
                   controller: _nameController,
@@ -124,7 +124,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     labelText: 'Họ và tên',
                     labelStyle: TextStyle(color: Colors.grey[400]),
-                    prefixIcon: const Icon(Icons.person_outlined, color: Colors.redAccent),
+                    prefixIcon: const Icon(Icons.person_outlined,
+                        color: Colors.redAccent),
                     filled: true,
                     fillColor: Colors.grey[900],
                     border: OutlineInputBorder(
@@ -137,7 +138,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+                      borderSide:
+                          const BorderSide(color: Colors.redAccent, width: 2),
                     ),
                   ),
                   validator: (value) {
@@ -147,9 +149,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Email field
                 TextFormField(
                   controller: _emailController,
@@ -158,7 +160,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     labelText: 'Email',
                     labelStyle: TextStyle(color: Colors.grey[400]),
-                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.redAccent),
+                    prefixIcon: const Icon(Icons.email_outlined,
+                        color: Colors.redAccent),
                     filled: true,
                     fillColor: Colors.grey[900],
                     border: OutlineInputBorder(
@@ -171,7 +174,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+                      borderSide:
+                          const BorderSide(color: Colors.redAccent, width: 2),
                     ),
                   ),
                   validator: (value) {
@@ -184,9 +188,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Password field
                 TextFormField(
                   controller: _passwordController,
@@ -195,10 +199,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     labelText: 'Mật khẩu',
                     labelStyle: TextStyle(color: Colors.grey[400]),
-                    prefixIcon: const Icon(Icons.lock_outlined, color: Colors.redAccent),
+                    prefixIcon: const Icon(Icons.lock_outlined,
+                        color: Colors.redAccent),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey,
                       ),
                       onPressed: () {
@@ -217,7 +224,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+                      borderSide:
+                          const BorderSide(color: Colors.redAccent, width: 2),
                     ),
                   ),
                   validator: (value) {
@@ -230,9 +238,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Confirm password field
                 TextFormField(
                   controller: _confirmPasswordController,
@@ -241,14 +249,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     labelText: 'Xác nhận mật khẩu',
                     labelStyle: TextStyle(color: Colors.grey[400]),
-                    prefixIcon: const Icon(Icons.lock_outlined, color: Colors.redAccent),
+                    prefixIcon: const Icon(Icons.lock_outlined,
+                        color: Colors.redAccent),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey,
                       ),
                       onPressed: () {
-                        setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                        setState(() =>
+                            _obscureConfirmPassword = !_obscureConfirmPassword);
                       },
                     ),
                     filled: true,
@@ -263,7 +275,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.redAccent, width: 2),
+                      borderSide:
+                          const BorderSide(color: Colors.redAccent, width: 2),
                     ),
                   ),
                   validator: (value) {
@@ -276,9 +289,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Register button
                 ElevatedButton(
                   onPressed: _isLoading ? null : _signUp,
@@ -295,7 +308,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
                       : const Text(

@@ -8,10 +8,8 @@ class TheaterDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1C1C1E),
       appBar: AppBar(
         title: Text(theater.name),
-        backgroundColor: Colors.redAccent,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -29,13 +27,16 @@ class TheaterDetailScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               theater.name,
-              style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontSize: 22),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               theater.address,
-              style: const TextStyle(color: Colors.white70),
+              style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -43,7 +44,10 @@ class TheaterDetailScreen extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               theater.description,
-              style: const TextStyle(color: Colors.white70, fontSize: 16),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(fontSize: 16),
               textAlign: TextAlign.justify,
             ),
           ],

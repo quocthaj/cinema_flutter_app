@@ -10,24 +10,25 @@ class AuthService {
   static const String _isLoggedInKey = 'isLoggedIn';
 
   // Đăng ký bằng email và password
-  Future<bool> signUpWithEmail(String email, String password, String name) async {
+  Future<bool> signUpWithEmail(
+      String email, String password, String name) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // Lấy danh sách user đã đăng ký
       List<Map<String, dynamic>> users = await _getRegisteredUsers();
-      
+
       // Kiểm tra email đã tồn tại chưa
       bool emailExists = users.any((user) => user['email'] == email);
       if (emailExists) {
         throw Exception('Email đã được sử dụng');
       }
-      
+
       // Validate password
       if (password.length < 6) {
         throw Exception('Mật khẩu phải có ít nhất 6 ký tự');
       }
-      
+
       // Tạo user mới
       Map<String, dynamic> newUser = {
         'id': DateTime.now().millisecondsSinceEpoch.toString(),
@@ -36,16 +37,16 @@ class AuthService {
         'name': name,
         'createdAt': DateTime.now().toIso8601String(),
       };
-      
+
       // Thêm vào danh sách
       users.add(newUser);
-      
+
       // Lưu lại
       await prefs.setString(_usersKey, jsonEncode(users));
-      
+
       // Tự động đăng nhập sau khi đăng ký
       await _saveCurrentUser(newUser);
-      
+
       return true;
     } catch (e) {
       print('Lỗi đăng ký: $e');
@@ -58,20 +59,22 @@ class AuthService {
     try {
       // Lấy danh sách user
       List<Map<String, dynamic>> users = await _getRegisteredUsers();
-      
+
       // Tìm user với email và password khớp
       Map<String, dynamic>? user = users.firstWhere(
-        (user) => user['email'] == email && user['password'] == _hashPassword(password),
+        (user) =>
+            user['email'] == email &&
+            user['password'] == _hashPassword(password),
         orElse: () => {},
       );
-      
+
       if (user.isEmpty) {
         throw Exception('Email hoặc mật khẩu không đúng');
       }
-      
+
       // Lưu thông tin đăng nhập
       await _saveCurrentUser(user);
-      
+
       return true;
     } catch (e) {
       print('Lỗi đăng nhập: $e');
@@ -89,7 +92,7 @@ class AuthService {
   Future<Map<String, String>> getCurrentUser() async {
     final prefs = await SharedPreferences.getInstance();
     String? userJson = prefs.getString(_currentUserKey);
-    
+
     if (userJson == null) {
       return {
         'userId': '',
@@ -97,7 +100,7 @@ class AuthService {
         'userName': '',
       };
     }
-    
+
     Map<String, dynamic> user = jsonDecode(userJson);
     return {
       'userId': user['id'] ?? '',
@@ -117,18 +120,17 @@ class AuthService {
   Future<void> resetPassword(String email) async {
     try {
       List<Map<String, dynamic>> users = await _getRegisteredUsers();
-      
+
       // Kiểm tra email có tồn tại không
       bool emailExists = users.any((user) => user['email'] == email);
-      
+
       if (!emailExists) {
         throw Exception('Email không tồn tại trong hệ thống');
       }
-      
+
       // Trong thực tế, bạn sẽ gửi email ở đây
       // Đây chỉ là giả lập
       print('Email reset password đã được gửi đến: $email');
-      
     } catch (e) {
       print('Lỗi reset password: $e');
       rethrow;
@@ -140,36 +142,35 @@ class AuthService {
     try {
       final prefs = await SharedPreferences.getInstance();
       String? userJson = prefs.getString(_currentUserKey);
-      
+
       if (userJson == null) {
         throw Exception('Chưa đăng nhập');
       }
-      
+
       Map<String, dynamic> currentUser = jsonDecode(userJson);
-      
+
       // Kiểm tra mật khẩu cũ
       if (currentUser['password'] != _hashPassword(oldPassword)) {
         throw Exception('Mật khẩu cũ không đúng');
       }
-      
+
       // Validate mật khẩu mới
       if (newPassword.length < 6) {
         throw Exception('Mật khẩu mới phải có ít nhất 6 ký tự');
       }
-      
+
       // Cập nhật mật khẩu
       List<Map<String, dynamic>> users = await _getRegisteredUsers();
       int index = users.indexWhere((user) => user['id'] == currentUser['id']);
-      
+
       if (index != -1) {
         users[index]['password'] = _hashPassword(newPassword);
         await prefs.setString(_usersKey, jsonEncode(users));
-        
+
         // Cập nhật current user
         currentUser['password'] = _hashPassword(newPassword);
         await prefs.setString(_currentUserKey, jsonEncode(currentUser));
       }
-      
     } catch (e) {
       print('Lỗi đổi mật khẩu: $e');
       rethrow;
@@ -181,26 +182,25 @@ class AuthService {
     try {
       final prefs = await SharedPreferences.getInstance();
       String? userJson = prefs.getString(_currentUserKey);
-      
+
       if (userJson == null) {
         throw Exception('Chưa đăng nhập');
       }
-      
+
       Map<String, dynamic> currentUser = jsonDecode(userJson);
-      
+
       // Cập nhật tên
       List<Map<String, dynamic>> users = await _getRegisteredUsers();
       int index = users.indexWhere((user) => user['id'] == currentUser['id']);
-      
+
       if (index != -1) {
         users[index]['name'] = name;
         await prefs.setString(_usersKey, jsonEncode(users));
-        
+
         // Cập nhật current user
         currentUser['name'] = name;
         await prefs.setString(_currentUserKey, jsonEncode(currentUser));
       }
-      
     } catch (e) {
       print('Lỗi cập nhật profile: $e');
       rethrow;
@@ -213,11 +213,11 @@ class AuthService {
   Future<List<Map<String, dynamic>>> _getRegisteredUsers() async {
     final prefs = await SharedPreferences.getInstance();
     String? usersJson = prefs.getString(_usersKey);
-    
+
     if (usersJson == null) {
       return [];
     }
-    
+
     List<dynamic> decoded = jsonDecode(usersJson);
     return decoded.cast<Map<String, dynamic>>();
   }

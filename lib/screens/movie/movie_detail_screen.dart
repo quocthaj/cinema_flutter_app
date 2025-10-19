@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/colors.dart';
+import '../../config/theme.dart';
 import '../bookings/booking_screen.dart';
 import '../../models/movie.dart';
 import '../auth/login_screen.dart';
@@ -41,18 +41,14 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   Widget _buildRating(double rating) {
     return Row(
       children: [
-        const Icon(Icons.star_rounded, color: Colors.amber, size: 28),
+        Icon(Icons.star_rounded, color: AppTheme.goldColor, size: 28),
         const SizedBox(width: 8),
         Text(
           rating.toStringAsFixed(1),
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 22),
         ),
         const SizedBox(width: 4),
-        const Text('/10', style: TextStyle(color: Colors.white70)),
+        Text('/10', style: Theme.of(context).textTheme.bodyMedium),
       ],
     );
   }
@@ -63,15 +59,16 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       margin: const EdgeInsets.only(right: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF3A3A3C),
+        color: AppTheme.fieldColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: datve, size: 18),
+          Icon(icon, color: AppTheme.primaryColor, size: 18),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(color: Colors.white, fontSize: 14)),
+          Text(label,
+              style: const TextStyle(color: Colors.white, fontSize: 14)),
         ],
       ),
     );
@@ -82,7 +79,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2E),
+        color: AppTheme.cardColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.5),
@@ -113,18 +110,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: datve,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
             child: const Text(
               "🎟️ Chọn Lịch & Đặt Vé",
               style: TextStyle(
                 fontSize: 18,
-                color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -136,19 +125,16 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color bgColor = Color(0xFF1C1C1E);
-
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: bgColor,
-        body: Center(child: CircularProgressIndicator(color: Colors.redAccent)),
+      return Scaffold(
+        body: Center(
+            child: CircularProgressIndicator(color: AppTheme.primaryColor)),
       );
     }
 
     final movie = widget.movie;
 
     return Scaffold(
-      backgroundColor: bgColor,
       bottomNavigationBar: _buildBookingButton(context),
       body: CustomScrollView(
         slivers: [
@@ -156,7 +142,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           SliverAppBar(
             pinned: true,
             expandedHeight: 400,
-            backgroundColor: bgColor,
             flexibleSpace: FlexibleSpaceBar(
               centerTitle: true,
               title: Text(
@@ -165,7 +150,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
                   shadows: [Shadow(blurRadius: 5, color: Colors.black)],
                 ),
               ),
@@ -201,29 +185,26 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildInfoChip(Icons.access_time_filled, "${movie.duration} phút"),
+                        _buildInfoChip(
+                            Icons.access_time_filled, "${movie.duration} phút"),
                         _buildInfoChip(Icons.local_activity, movie.genre),
-                        _buildInfoChip(Icons.calendar_today, "KC: ${movie.releaseDate}"),
+                        _buildInfoChip(
+                            Icons.calendar_today, "KC: ${movie.releaseDate}"),
                       ],
                     ),
                   ),
                   const SizedBox(height: 25),
-                  const Text(
+                  Text(
                     "Nội dung phim",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const Divider(color: Colors.white12, height: 15),
                   Text(
                     movie.description,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      height: 1.5,
-                      color: Colors.white70,
-                    ),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(height: 1.5),
                   ),
                   const SizedBox(height: 100),
                 ],
