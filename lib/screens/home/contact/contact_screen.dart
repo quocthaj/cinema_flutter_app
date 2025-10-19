@@ -10,8 +10,8 @@ class ContactScreen extends StatelessWidget {
     final List<Map<String, dynamic>> services = [
       {
         'title': 'THUÊ RẠP TỔ CHỨC SỰ KIỆN',
-        'iconColor': const Color(0xFFE50914), // Netflix Red
-        'gradientColors': [const Color(0xFFE50914), const Color(0xFFB20710)],
+        'iconColor': const Color(0xFF9B3232), // Burgundy Red
+        'gradientColors': [const Color(0xFF9B3232), const Color(0xFF7A2828)],
         'image': 'lib/images/service_event.jpg',
         'description':
             'Không gian sang trọng, phòng chiếu riêng biệt, âm thanh vượt trội, hỗ trợ tổ chức họp báo, hội nghị, sự kiện đặc biệt...',
