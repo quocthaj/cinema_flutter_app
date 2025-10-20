@@ -33,9 +33,12 @@ class _RewardDetailsPageState extends State<RewardDetailsPage> {
           children: [
             Image.asset(ticket['image'], height: 180, fit: BoxFit.cover),
             const SizedBox(height: 12),
-            Text(ticket['title'], style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(ticket['title'],
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 6),
-            Text('${ticket['price'] * _quantity} đ', style: const TextStyle(fontSize: 18, color: Colors.redAccent)),
+            Text('${ticket['price'] * _quantity} đ',
+                style: const TextStyle(fontSize: 18, color: Colors.redAccent)),
             const SizedBox(height: 10),
 
             // Số lượng
@@ -56,11 +59,14 @@ class _RewardDetailsPageState extends State<RewardDetailsPage> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.redAccent,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () {},
-                  child: const Text('Mua ngay', style: TextStyle(fontSize: 16, color: Colors.white)),
+                  child: const Text('Mua ngay',
+                      style: TextStyle(fontSize: 16, color: Colors.white)),
                 ),
               ],
             ),
@@ -90,7 +96,10 @@ class _RewardDetailsPageState extends State<RewardDetailsPage> {
                             'Không giới hạn số lượng mua.\n'
                             'Hạn sử dụng: ${ticket['duration']}.\n'
                             'Áp dụng cho tất cả rạp hệ thống.',
-                            style: TextStyle(fontSize: 16, color: Colors.black87, height: 1.5),
+                            style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black87,
+                                height: 1.5),
                           ),
                         ),
                         Padding(
@@ -99,7 +108,10 @@ class _RewardDetailsPageState extends State<RewardDetailsPage> {
                             'Sau khi mua, mã quà tặng sẽ được gửi trong mục "Voucher của tôi". '
                             'Khi đặt vé, nhập mã để giảm trừ tương ứng. '
                             'Không áp dụng hoàn tiền sau khi sử dụng.',
-                            style: TextStyle(fontSize: 16, color: Colors.black87, height: 1.5),
+                            style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black87,
+                                height: 1.5),
                           ),
                         ),
                       ],
