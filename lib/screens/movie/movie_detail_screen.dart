@@ -25,11 +25,13 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     _checkLoginStatus();
   }
 
-  Future<void> _checkLoginStatus() async {
+  void _checkLoginStatus() {
     try {
-      final userData = await _authService.getCurrentUser();
+      // SỬA: Lấy user từ getter (không cần await)
+      final user = _authService.currentUser;
       setState(() {
-        _isLoggedIn = userData.isNotEmpty;
+        // SỬA: Kiểm tra user có null hay không
+        _isLoggedIn = (user != null);
         _isLoading = false;
       });
     } catch (e) {
@@ -99,7 +101,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   context,
                   MaterialPageRoute(builder: (_) => const LoginScreen()),
                 );
-                await _checkLoginStatus(); // Cập nhật lại sau khi login
+                // SỬA: Xóa await vì hàm _checkLoginStatus không còn là Future
+                _checkLoginStatus();
               } else {
                 // Nếu đã đăng nhập → đến BookingScreen
                 Navigator.push(

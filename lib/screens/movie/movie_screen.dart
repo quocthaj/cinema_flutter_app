@@ -32,9 +32,10 @@ class _MovieScreenState extends State<MovieScreen>
     _checkLogin();
   }
 
-  Future<void> _checkLogin() async {
-    final userData = await _authService.getCurrentUser();
-    setState(() => _isLoggedIn = userData.isNotEmpty);
+  void _checkLogin() {
+    // SỬA: Lấy user từ getter và kiểm tra null
+    final user = _authService.currentUser;
+    setState(() => _isLoggedIn = (user != null));
   }
 
   void _openMovie(Movie movie) {

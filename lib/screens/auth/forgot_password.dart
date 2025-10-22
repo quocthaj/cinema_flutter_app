@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
+// SỬA LẠI ĐƯỜNG DẪN IMPORT
+import '/services/auth_service.dart'; // <-- Thay 'movie_app' bằng tên dự án
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({Key? key}) : super(key: key);
@@ -25,30 +27,45 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       setState(() => _isLoading = true);
 
       try {
-        await _authService.resetPassword(_emailController.text.trim());
+        // SỬA: Gọi hàm sendPasswordResetEmail của Firebase
+        await _authService.sendPasswordResetEmail(_emailController.text.trim());
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
+              // SỬA: Cập nhật thông báo cho chính xác
               content: const Text(
-                'Yêu cầu đã được gửi!\n'
-                '(Lưu ý: Đây là demo nên không gửi email thật. '
-                'Trong thực tế bạn sẽ nhận được email khôi phục mật khẩu)',
-              ),
+                  'Đã gửi email khôi phục mật khẩu. Vui lòng kiểm tra hộp thư!'),
               backgroundColor: Colors.green,
-              duration: const Duration(seconds: 5),
+              duration: const Duration(seconds: 3),
             ),
           );
 
-          // Đợi 2 giây rồi quay lại login
-          await Future.delayed(const Duration(seconds: 2));
+          await Future.delayed(const Duration(seconds: 1));
           if (mounted) Navigator.pop(context);
+        }
+      } on FirebaseAuthException catch (e) {
+        // SỬA: Bắt lỗi từ Firebase
+        String errorMessage = 'Email không tồn tại hoặc không hợp lệ.';
+        if (e.code == 'user-not-found') {
+          errorMessage = 'Không tìm thấy tài khoản nào với email này.';
+        } else if (e.code == 'invalid-email') {
+          errorMessage = 'Email không hợp lệ.';
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.toString().replaceAll('Exception: ', '')),
+              content: Text('Đã xảy ra lỗi: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -61,11 +78,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Toàn bộ UI của bạn được giữ nguyên
     return Scaffold(
       backgroundColor: const Color(0xFF1C1C1E),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        // Thêm nút back
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -100,40 +123,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const SizedBox(height: 8),
 
                 Text(
-                  'Nhập email của bạn để kiểm tra tài khoản',
+                  'Nhập email của bạn để nhận link khôi phục', // Sửa text
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey[400],
                   ),
                   textAlign: TextAlign.center,
-                ),
-
-                const SizedBox(height: 16),
-
-                // Info box
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline,
-                          color: Colors.orange, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Lưu ý: Đây là phiên bản demo nên không gửi email thật',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[300],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
 
                 const SizedBox(height: 40),
@@ -198,7 +193,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                         )
                       : const Text(
-                          'Kiểm tra Email',
+                          'Gửi Email Khôi Phục', // Sửa text
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

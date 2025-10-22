@@ -14,6 +14,7 @@ import '../reward/reward_screen.dart';
 import '../theater/theaters_screen.dart';
 import '../news/news_and_promotions_screen.dart';
 import '../../config/theme.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // <-- DÒNG NÀY
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -51,17 +52,33 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _loadUserData() async {
+  void _loadUserData() {
     try {
-      final userData = await _authService.getCurrentUser();
+      // SỬA: Lấy user từ getter (không cần await)
+      final User? user = _authService.currentUser;
+
       setState(() {
-        _userName = userData['userName'] ?? 'Khách';
-        _userEmail = userData['userEmail'] ?? '';
-        _isLoggedIn = userData.isNotEmpty;
+        if (user != null) {
+          // SỬA: Lấy thông tin từ đối tượng User
+          _userName = user.displayName ?? 'Bạn';
+          _userEmail = user.email ?? '';
+          _isLoggedIn = true;
+        } else {
+          // Nếu user là null
+          _userName = 'Khách';
+          _userEmail = '';
+          _isLoggedIn = false;
+        }
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
+      setState(() {
+        // Xử lý nếu có lỗi
+        _userName = 'Khách';
+        _userEmail = '';
+        _isLoggedIn = false;
+        _isLoading = false;
+      });
     }
   }
 
@@ -211,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   final actualIndex = index % featuredMovies.length;
                   final movie = featuredMovies[actualIndex];
                   final movieNumber = actualIndex + 1; // Số thứ tự từ 1-N
-                  
+
                   final scale = (1 - ((_currentPage - index).abs() * 0.2))
                       .clamp(0.8, 1.0);
                   final rotation = (_currentPage - index) * 0.3;
@@ -377,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-                  
+
                   // === PHẦN GIỮA: Thông tin phim (TRÊN line cắt) ===
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -411,7 +428,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 6),
-                        
+
                         // Rating, thời lượng, ngày
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -457,13 +474,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  
+
                   // === ĐƯỜNG PHÂN CÁCH (line cắt) ===
                   CustomPaint(
                     size: const Size(double.infinity, 2),
                     painter: DashedLinePainter(),
                   ),
-                  
+
                   // === PHẦN DƯỚI: Button Đặt vé (DƯỚI line cắt) ===
                   Container(
                     height: 78, // Mở rộng để lấp đầy khoảng trống
@@ -535,20 +552,20 @@ class TicketTopClipper extends CustomClipper<Path> {
     const double cornerRadius = 18.0;
     const double notchRadius = 10.0;
     const int notchCount = 8;
-    
+
     // Top left corner
     path.moveTo(0, cornerRadius);
     path.quadraticBezierTo(0, 0, cornerRadius, 0);
-    
+
     // Top edge
     path.lineTo(size.width - cornerRadius, 0);
-    
+
     // Top right corner
     path.quadraticBezierTo(size.width, 0, size.width, cornerRadius);
-    
+
     // Right edge
     path.lineTo(size.width, size.height - notchRadius);
-    
+
     // Bottom edge with notches (răng cưa)
     final double notchWidth = size.width / notchCount;
     for (int i = notchCount; i >= 0; i--) {
@@ -565,11 +582,11 @@ class TicketTopClipper extends CustomClipper<Path> {
         path.lineTo(x, size.height);
       }
     }
-    
+
     // Left edge
     path.lineTo(0, cornerRadius);
     path.close();
-    
+
     return path;
   }
 
@@ -585,11 +602,11 @@ class TicketBottomClipper extends CustomClipper<Path> {
     const double cornerRadius = 18.0;
     const double notchRadius = 10.0;
     const int notchCount = 8;
-    
+
     // Top edge with notches (răng cưa)
     final double notchWidth = size.width / notchCount;
     path.moveTo(0, 0);
-    
+
     for (int i = 0; i <= notchCount; i++) {
       final double x = i * notchWidth;
       if (i > 0) {
@@ -604,10 +621,10 @@ class TicketBottomClipper extends CustomClipper<Path> {
         path.lineTo(x + notchWidth / 2, 0);
       }
     }
-    
+
     // Right edge
     path.lineTo(size.width, size.height - cornerRadius);
-    
+
     // Bottom right corner
     path.quadraticBezierTo(
       size.width,
@@ -615,17 +632,17 @@ class TicketBottomClipper extends CustomClipper<Path> {
       size.width - cornerRadius,
       size.height,
     );
-    
+
     // Bottom edge
     path.lineTo(cornerRadius, size.height);
-    
+
     // Bottom left corner
     path.quadraticBezierTo(0, size.height, 0, size.height - cornerRadius);
-    
+
     // Left edge
     path.lineTo(0, 0);
     path.close();
-    
+
     return path;
   }
 
@@ -641,19 +658,20 @@ class TicketCardClipper extends CustomClipper<Path> {
     const double cornerRadius = 20.0;
     const double notchRadius = 8.0;
     const int notchCountVertical = 10;
-    
+
     // Top left corner
     path.moveTo(0, cornerRadius);
     path.quadraticBezierTo(0, 0, cornerRadius, 0);
-    
+
     // Top edge
     path.lineTo(size.width - cornerRadius, 0);
-    
+
     // Top right corner
     path.quadraticBezierTo(size.width, 0, size.width, cornerRadius);
-    
+
     // Right edge with notches
-    final double notchHeightRight = (size.height - 2 * cornerRadius) / notchCountVertical;
+    final double notchHeightRight =
+        (size.height - 2 * cornerRadius) / notchCountVertical;
     for (int i = 0; i <= notchCountVertical; i++) {
       final double y = cornerRadius + i * notchHeightRight;
       if (i > 0) {
@@ -668,7 +686,7 @@ class TicketCardClipper extends CustomClipper<Path> {
         path.lineTo(size.width, y + notchHeightRight / 2);
       }
     }
-    
+
     // Bottom right corner
     path.lineTo(size.width, size.height - cornerRadius);
     path.quadraticBezierTo(
@@ -677,13 +695,13 @@ class TicketCardClipper extends CustomClipper<Path> {
       size.width - cornerRadius,
       size.height,
     );
-    
+
     // Bottom edge
     path.lineTo(cornerRadius, size.height);
-    
+
     // Bottom left corner
     path.quadraticBezierTo(0, size.height, 0, size.height - cornerRadius);
-    
+
     // Left edge with notches
     for (int i = notchCountVertical; i >= 0; i--) {
       final double y = cornerRadius + i * notchHeightRight;
@@ -699,10 +717,10 @@ class TicketCardClipper extends CustomClipper<Path> {
         path.lineTo(0, y - notchHeightRight / 2);
       }
     }
-    
+
     path.lineTo(0, cornerRadius);
     path.close();
-    
+
     return path;
   }
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../config/theme.dart';
-import '../../services/auth_service.dart';
+import 'forgot_password.dart'; // Thay 'movie_app' bằng tên dự án
 import 'register_screen.dart';
-import 'forgot_password.dart';
-import '../home/home_screen.dart';
+import '/services/auth_service.dart';
+import '../../config/theme.dart';
+// import '../home/home_screen.dart'; // Không cần import HomeScreen ở đây nữa
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,25 +19,17 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authService = AuthService();
   bool _isLoading = false;
   bool _obscurePassword = true;
-  bool _isCheckingLogin = true;
+  // bool _isCheckingLogin = true; // KHÔNG CẦN NỮA
 
-  @override
-  void initState() {
-    super.initState();
-    _checkAutoLogin();
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _checkAutoLogin(); // KHÔNG CẦN NỮA
+  // }
 
-  Future<void> _checkAutoLogin() async {
-    bool isLoggedIn = await _authService.isLoggedIn();
-    if (isLoggedIn && mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } else {
-      setState(() => _isCheckingLogin = false);
-    }
-  }
+  // Future<void> _checkAutoLogin() async { // KHÔNG CẦN NỮA
+  //   // AuthWrapper trong main.dart sẽ xử lý việc này
+  // }
 
   @override
   void dispose() {
@@ -50,49 +42,44 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      try {
-        await _authService.signInWithEmail(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
+      // Gọi hàm signInWithEmailAndPassword từ Firebase AuthService
+      final user = await _authService.signInWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
 
-        if (mounted) {
+      // Xử lý kết quả
+      if (mounted) {
+        if (user != null) {
+          // Đăng nhập thành công!
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Đăng nhập thành công!'),
               backgroundColor: Colors.green,
             ),
           );
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
+          // KHÔNG CẦN Navigator.pushReplacement ở đây.
+          // AuthWrapper trong main.dart sẽ tự động phát hiện
+          // sự thay đổi trạng thái và điều hướng đến HomeScreen.
+        } else {
+          // Đăng nhập thất bại
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.toString().replaceAll('Exception: ', '')),
+              content: const Text('Email hoặc mật khẩu không đúng.'),
               backgroundColor: AppTheme.errorColor,
             ),
           );
         }
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
       }
+
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isCheckingLogin) {
-      return Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(color: AppTheme.primaryColor),
-        ),
-      );
-    }
+    // KHÔNG CẦN check _isCheckingLogin
+    // if (_isCheckingLogin) { ... }
 
     return Scaffold(
       body: SafeArea(
@@ -181,7 +168,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const ForgotPasswordScreen()),
+                          builder: (context) => const ForgotPasswordScreen(),
+                        ),
                       );
                     },
                     child: const Text('Quên mật khẩu?'),
