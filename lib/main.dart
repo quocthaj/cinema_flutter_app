@@ -74,7 +74,7 @@ class AuthWrapper extends StatelessWidget {
         }
 
         // Chưa đăng nhập
-        return const LoginScreen();
+        return const HomeScreen();
       },
     );
   }

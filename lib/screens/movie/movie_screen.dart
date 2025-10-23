@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
-import '../../data/mock_Data.dart';
+// import '../../data/mock_Data.dart'; // Bỏ mock data
 import '../../models/movie.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
@@ -10,7 +10,7 @@ import '../reward/reward_screen.dart';
 import '../theater/theaters_screen.dart';
 import '../home/bottom_nav_bar.dart';
 import '../news/news_and_promotions_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart'; // Đã được import qua firestore_service
 import '../../services/firestore_service.dart';
 
 class MovieScreen extends StatefulWidget {
@@ -23,34 +23,40 @@ class MovieScreen extends StatefulWidget {
 class _MovieScreenState extends State<MovieScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final _authService = AuthService();
+  // final _authService = AuthService(); // Không cần thiết ở đây nữa
   final _firestoreService =
       FirestoreService(); // <-- THÊM: Khởi tạo FirestoreService
-  bool _isLoggedIn = false;
+
+  // --- XÓA BIẾN NÀY ---
+  // bool _isLoggedIn = false;
   int _currentIndex = 0; // ✅ "Phim" là tab đầu tiên trong thanh điều hướng
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _checkLogin();
+    // --- XÓA HÀM NÀY ---
+    // _checkLogin();
   }
 
-  // SỬA: Dùng 'currentUser' (getter) thay vì hàm async
-  void _checkLogin() {
-    final user = _authService.currentUser;
-    setState(() => _isLoggedIn = (user != null));
-  }
+  // --- XÓA HÀM NÀY ---
+  // void _checkLogin() {
+  //   final user = _authService.currentUser;
+  //   setState(() => _isLoggedIn = (user != null));
+  // }
 
+  // --- SỬA LẠI HÀM NÀY ---
   void _openMovie(Movie movie) {
-    if (!_isLoggedIn) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      ).then((_) => _checkLogin()); // Kiểm tra lại login sau khi quay về
-      return;
-    }
+    // --- XÓA LOGIC CHECK LOGIN ---
+    // if (!_isLoggedIn) {
+    //   Navigator.push(
+    //     context,
+    //     MaterialPageRoute(builder: (_) => const LoginScreen()),
+    //   ).then((_) => _checkLogin()); // Kiểm tra lại login sau khi quay về
+    //   return;
+    // }
 
+    // LUÔN ĐI THẲNG VÀO MOVIE DETAIL
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => MovieDetailScreen(movie: movie)),
@@ -59,12 +65,6 @@ class _MovieScreenState extends State<MovieScreen>
 
   @override
   Widget build(BuildContext context) {
-    // XÓA: Dữ liệu mock
-    // final nowShowing =
-    //     mockMovies.where((m) => m.status == 'now_showing').toList();
-    // final comingSoon =
-    //     mockMovies.where((m) => m.status == 'coming_soon').toList();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -192,7 +192,7 @@ class _MovieScreenState extends State<MovieScreen>
   // ======= Thẻ phim =======
   Widget _buildMovieCard(Movie movie) {
     return GestureDetector(
-      onTap: () => _openMovie(movie),
+      onTap: () => _openMovie(movie), // Hàm _openMovie đã được sửa
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF2C2C2E),
@@ -266,7 +266,8 @@ class _MovieScreenState extends State<MovieScreen>
                   const SizedBox(height: 6),
                   Center(
                     child: ElevatedButton(
-                      onPressed: () => _openMovie(movie),
+                      onPressed: () =>
+                          _openMovie(movie), // Hàm _openMovie đã được sửa
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.redAccent,
                         shape: RoundedRectangleBorder(
