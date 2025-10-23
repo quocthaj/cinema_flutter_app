@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import '../../config/theme.dart';
 import '../../models/movie.dart';
 
@@ -235,11 +236,36 @@ class _BookingScreenState extends State<BookingScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.asset(
+                    child: Image.network(
                       widget.movie.posterUrl,
-                      height: 100, // Nhỏ hơn
-                      width: 70, // Nhỏ hơn
+                      height: 100,
+                      width: 70,
                       fit: BoxFit.cover,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return SizedBox(
+                          height: 100,
+                          width: 70,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppTheme.primaryColor,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 100,
+                          width: 70,
+                          color: AppTheme.cardColor,
+                          child: const Icon(
+                            Icons.movie_creation_outlined,
+                            color: Colors.white54,
+                            size: 30,
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -400,7 +426,7 @@ class _BookingScreenState extends State<BookingScreen> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (selectedDate == null ||
                   selectedTime == null ||
                   selectedSeats.isEmpty) {
@@ -413,15 +439,36 @@ class _BookingScreenState extends State<BookingScreen> {
                 return;
               }
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    "Đặt vé thành công!\nPhim: ${widget.movie.title}\nNgày: $selectedDate - $selectedTime\nGhế: ${selectedSeats.join(", ")}\nTổng: ${totalPrice.toStringAsFixed(0)} VNĐ",
+              // Hiển thị loading
+              EasyLoading.show(status: 'Đang đặt vé...');
+
+              try {
+                // Giả lập xử lý đặt vé (gọi API)
+                await Future.delayed(const Duration(seconds: 2));
+
+                // Ẩn loading
+                EasyLoading.dismiss();
+
+                if (!mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      "Đặt vé thành công!\nPhim: ${widget.movie.title}\nNgày: $selectedDate - $selectedTime\nGhế: ${selectedSeats.join(", ")}\nTổng: ${totalPrice.toStringAsFixed(0)} VNĐ",
+                    ),
+                    backgroundColor: Colors.green,
+                    duration: const Duration(seconds: 4),
                   ),
-                  backgroundColor: Colors.green,
-                  duration: const Duration(seconds: 4),
-                ),
-              );
+                );
+              } catch (e) {
+                EasyLoading.dismiss();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Đặt vé thất bại: $e"),
+                    backgroundColor: AppTheme.errorColor,
+                  ),
+                );
+              }
             },
             child: const Text(
               "Xác nhận đặt vé",

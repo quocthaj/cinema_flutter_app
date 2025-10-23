@@ -1,3 +1,4 @@
+import 'package:doan_mobile/screens/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 // import '../../data/mock_Data.dart'; // Bỏ mock data
@@ -30,6 +31,9 @@ class _MovieScreenState extends State<MovieScreen>
   // --- XÓA BIẾN NÀY ---
   // bool _isLoggedIn = false;
   int _currentIndex = 0; // ✅ "Phim" là tab đầu tiên trong thanh điều hướng
+
+  // Thêm trạng thái loading cho shimmer
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -164,12 +168,29 @@ class _MovieScreenState extends State<MovieScreen>
   // ======= Lưới phim (2 cột) =======
   // (Giữ nguyên logic của bạn)
   Widget _buildMovieGrid(List<Movie> movies) {
-    if (movies.isEmpty) {
+    if (!_isLoading && movies.isEmpty) {
       return const Center(
         child: Text(
           "Không có phim nào để hiển thị",
           style: TextStyle(color: Colors.white70, fontSize: 16),
         ),
+      );
+    }
+
+    if (_isLoading) {
+      // hiển thị shimmer placeholders
+      return GridView.builder(
+        padding: const EdgeInsets.all(12),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2, // Hiển thị 2 cột
+          childAspectRatio: 0.65,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: 6,
+        itemBuilder: (context, index) {
+          return const MovieCardShimmer();
+        },
       );
     }
 

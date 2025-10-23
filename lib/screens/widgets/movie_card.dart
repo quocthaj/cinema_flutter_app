@@ -64,10 +64,34 @@ class MovieCard extends StatelessWidget {
                     const BorderRadius.vertical(top: Radius.circular(12)),
                 child: Hero(
                   tag: movie.id,
-                  child: Image.asset(
+                  child: Image.network(
                     movie.posterUrl,
                     width: cardWidth,
                     fit: BoxFit.cover,
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return Container(
+                        color: AppTheme.cardColor,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppTheme.primaryColor,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: AppTheme.cardColor,
+                        child: const Center(
+                          child: Icon(
+                            Icons.movie_creation_outlined,
+                            color: Colors.white54,
+                            size: 50,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -80,43 +104,47 @@ class MovieCard extends StatelessWidget {
                 padding: const EdgeInsets.all(10.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Tên phim
-                    Text(
-                      movie.title,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        movie.title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 4),
 
                     // Rating & Duration
                     Row(
                       children: [
-                        Icon(Icons.star, color: AppTheme.goldColor, size: 14),
-                        const SizedBox(width: 4),
+                        Icon(Icons.star, color: AppTheme.goldColor, size: 13),
+                        const SizedBox(width: 3),
                         Text(
                           "${movie.rating}",
-                          style: const TextStyle(fontSize: 12),
+                          style: const TextStyle(fontSize: 11),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Icon(Icons.access_time,
-                            size: 14, color: AppTheme.textSecondaryColor),
-                        const SizedBox(width: 4),
+                            size: 13, color: AppTheme.textSecondaryColor),
+                        const SizedBox(width: 3),
                         Text(
                           "${movie.duration}'",
-                          style: const TextStyle(fontSize: 12),
+                          style: const TextStyle(fontSize: 11),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 6),
 
                     // Nút Đặt vé
                     SizedBox(
                       width: double.infinity,
-                      height: 36,
+                      height: 32,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: BackdropFilter(
@@ -137,7 +165,7 @@ class MovieCard extends StatelessWidget {
                               child: const Text(
                                 "Đặt vé",
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),

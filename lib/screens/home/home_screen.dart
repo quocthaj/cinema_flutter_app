@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:carousel_slider_plus/carousel_slider_plus.dart';
+﻿import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 // import '../../data/mock_Data.dart'; // Bỏ mock data
 import '../../models/movie.dart';
 import '../widgets/movie_card.dart';
+import '../widgets/featured_movies_carousel.dart';
+import '../widgets/banner_carousel.dart';
 import 'bottom_nav_bar.dart';
 import 'custom_drawer.dart';
 // --- 1. SỬA IMPORT NÀY ---
@@ -35,16 +36,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // bool _isLoadingUserData = true;
   // String _userName = '';
   // String _userEmail = '';
-
-  int _currentBanner = 0;
-  final PageController _pageController = PageController(viewportFraction: 0.75);
-  double _currentPage = 0.0;
-
-  final List<String> _banners = [
-    'lib/images/banner1.jpg',
-    'lib/images/banner2.jpg',
-    'lib/images/banner3.jpg',
-  ];
 
   @override
   void initState() {
