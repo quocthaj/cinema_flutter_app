@@ -51,30 +51,33 @@ class _FeaturedMoviesCarouselState extends State<FeaturedMoviesCarousel> {
       );
     }
 
-    return SizedBox(
-      height: 444,
-      child: PageView.builder(
-        controller: _pageController,
-        itemCount: widget.movies.length * 1000, // Infinite scroll
-        itemBuilder: (context, index) {
-          final actualIndex = index % widget.movies.length;
-          final movie = widget.movies[actualIndex];
-          final movieNumber = actualIndex + 1;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+      child: SizedBox(
+        height: 480, // Tăng từ 444 lên 480 để có space cho transform
+        child: PageView.builder(
+          controller: _pageController,
+          itemCount: widget.movies.length * 1000,
+          itemBuilder: (context, index) {
+            final actualIndex = index % widget.movies.length;
+            final movie = widget.movies[actualIndex];
+            final movieNumber = actualIndex + 1;
 
-          final scale = (1 - ((_currentPage - index).abs() * 0.2)).clamp(0.8, 1.0);
-          final rotation = (_currentPage - index) * 0.3;
+            final scale = (1 - ((_currentPage - index).abs() * 0.2)).clamp(0.8, 1.0);
+            final rotation = (_currentPage - index) * 0.3;
 
-          return Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..rotateY(rotation)
-              ..scale(scale, scale),
-            child: GestureDetector(
-              onTap: () => widget.onMovieTap(movie),
-              child: _buildFeaturedMovieCard(movie, movieNumber),
-            ),
-          );
-        },
+            return Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..rotateY(rotation)
+                ..scale(scale, scale),
+              child: GestureDetector(
+                onTap: () => widget.onMovieTap(movie),
+                child: _buildFeaturedMovieCard(movie, movieNumber),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -112,77 +115,75 @@ class _FeaturedMoviesCarouselState extends State<FeaturedMoviesCarousel> {
             child: Column(
               children: [
                 // Poster + Number
-                Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(20),
-                      ),
-                      child: Image.network(
-                        movie.posterUrl,
-                        height: 280,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, progress) {
-                          if (progress == null) return child;
-                          return SizedBox(
-                            height: 280,
-                            child: Center(
+                Expanded(
+                  flex: 3,
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(20),
+                        ),
+                        child: Image.network(
+                          movie.posterUrl,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return Center(
                               child: CircularProgressIndicator(
                                 color: AppTheme.primaryColor,
                               ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return const SizedBox(
-                            height: 280,
-                            child: Icon(
-                              Icons.movie_creation_outlined,
-                              color: Colors.white54,
-                              size: 50,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 12,
-                      right: 12,
-                      child: Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Center(
+                              child: Icon(
+                                Icons.movie_creation_outlined,
+                                color: Colors.white54,
+                                size: 50,
+                              ),
+                            );
+                          },
                         ),
-                        child: Center(
-                          child: Text(
-                            '$movieNumber',
-                            style: const TextStyle(
-                              color: Color(0xFF9B3232),
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                      ),
+                      Positioned(
+                        bottom: 12,
+                        right: 12,
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              '$movieNumber',
+                              style: const TextStyle(
+                                color: Color(0xFF9B3232),
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
                 // Movie Info
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 10,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -195,12 +196,13 @@ class _FeaturedMoviesCarouselState extends State<FeaturedMoviesCarousel> {
                     ),
                   ),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         movie.title.toUpperCase(),
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                           height: 1.2,
@@ -209,43 +211,43 @@ class _FeaturedMoviesCarouselState extends State<FeaturedMoviesCarousel> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 5),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(
                             Icons.star,
                             color: Color(0xFFFFD700),
-                            size: 15,
+                            size: 14,
                           ),
                           const SizedBox(width: 3),
                           Text(
                             "${movie.rating}",
                             style: const TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
                           const Icon(
                             Icons.access_time,
                             color: Colors.white,
-                            size: 13,
+                            size: 12,
                           ),
                           const SizedBox(width: 3),
                           Text(
                             "${movie.duration} Phút",
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: Colors.white,
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
                           Text(
                             movie.releaseDate,
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: Colors.white70,
                             ),
                           ),
@@ -263,7 +265,7 @@ class _FeaturedMoviesCarouselState extends State<FeaturedMoviesCarousel> {
 
                 // Book Button
                 Container(
-                  height: 78,
+                  height: 70,
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -286,7 +288,6 @@ class _FeaturedMoviesCarouselState extends State<FeaturedMoviesCarousel> {
                       ),
                       child: Center(
                         child: Container(
-                          width: 180,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 40,
                             vertical: 10,
@@ -303,7 +304,7 @@ class _FeaturedMoviesCarouselState extends State<FeaturedMoviesCarousel> {
                             "Đặt vé",
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                               letterSpacing: 1.2,
