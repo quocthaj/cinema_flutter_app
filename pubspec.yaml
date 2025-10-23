@@ -42,7 +42,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   shimmer_animation: ^2.2.2
   shimmer: ^3.0.0
+
+  #Firebase packages
   flutter_easyloading: ^3.0.5
+  firebase_core: ^4.0.0
+  cloud_firestore: ^6.0.3
 
 dev_dependencies:
   flutter_test:
