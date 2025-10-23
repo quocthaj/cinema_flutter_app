@@ -1,6 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart'; // <-- THÊM: Để bắt lỗi Firebase
 import 'package:flutter/material.dart';
-import '../../services/auth_service.dart';
-import '../home/home_screen.dart';
+import '/services/auth_service.dart'; // <-- Thay 'movie_app' bằng tên dự án
+// import '../home/home_screen.dart'; // KHÔNG CẦN import HomeScreen ở đây
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -34,30 +35,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _isLoading = true);
 
       try {
-        await _authService.signUpWithEmail(
+        // SỬA: Gọi hàm signUpWithEmailAndPassword từ Firebase AuthService
+        final user = await _authService.signUpWithEmailAndPassword(
           _emailController.text.trim(),
           _passwordController.text,
           _nameController.text.trim(),
         );
 
-        if (mounted) {
+        if (mounted && user != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Đăng ký thành công!'),
+              content: Text('Đăng ký thành công! Đang tự động đăng nhập...'),
               backgroundColor: Colors.green,
             ),
           );
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
+          // KHÔNG CẦN Navigator.pushReplacement.
+          // AuthWrapper trong main.dart sẽ tự động phát hiện
+          // người dùng mới và điều hướng đến HomeScreen.
+          // Chúng ta có thể pop màn hình này để quay về Login,
+          // AuthWrapper sẽ lo phần còn lại.
+          if (Navigator.canPop(context)) {
+            Navigator.of(context).pop();
+          }
         }
-      } catch (e) {
+      } on FirebaseAuthException catch (e) {
+        // Bắt lỗi cụ thể từ Firebase
+        String errorMessage = 'Đã xảy ra lỗi. Vui lòng thử lại.';
+        if (e.code == 'weak-password') {
+          errorMessage = 'Mật khẩu quá yếu.';
+        } else if (e.code == 'email-already-in-use') {
+          errorMessage = 'Email này đã được sử dụng.';
+        } else if (e.code == 'invalid-email') {
+          errorMessage = 'Email không hợp lệ.';
+        }
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.toString().replaceAll('Exception: ', '')),
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        // Bắt các lỗi chung khác
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Đã xảy ra lỗi: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -75,6 +100,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        // Thêm icon back để quay lại màn hình Login
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
