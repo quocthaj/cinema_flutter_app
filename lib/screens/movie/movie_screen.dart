@@ -10,7 +10,8 @@ import '../reward/reward_screen.dart';
 import '../theater/theaters_screen.dart';
 import '../home/bottom_nav_bar.dart';
 import '../news/news_and_promotions_screen.dart';
-import '../widgets/shimmer_loading.dart'; // <-- thêm import
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/firestore_service.dart';
 
 class MovieScreen extends StatefulWidget {
   const MovieScreen({super.key});
@@ -23,6 +24,8 @@ class _MovieScreenState extends State<MovieScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _authService = AuthService();
+  final _firestoreService =
+      FirestoreService(); // <-- THÊM: Khởi tạo FirestoreService
   bool _isLoggedIn = false;
   int _currentIndex = 0; // ✅ "Phim" là tab đầu tiên trong thanh điều hướng
 
@@ -45,9 +48,10 @@ class _MovieScreenState extends State<MovieScreen>
     }
   }
 
-  Future<void> _checkLogin() async {
-    final userData = await _authService.getCurrentUser();
-    setState(() => _isLoggedIn = userData.isNotEmpty);
+  // SỬA: Dùng 'currentUser' (getter) thay vì hàm async
+  void _checkLogin() {
+    final user = _authService.currentUser;
+    setState(() => _isLoggedIn = (user != null));
   }
 
   void _openMovie(Movie movie) {
@@ -55,7 +59,7 @@ class _MovieScreenState extends State<MovieScreen>
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
-      ).then((_) => _checkLogin());
+      ).then((_) => _checkLogin()); // Kiểm tra lại login sau khi quay về
       return;
     }
 
@@ -67,10 +71,11 @@ class _MovieScreenState extends State<MovieScreen>
 
   @override
   Widget build(BuildContext context) {
-    final nowShowing =
-        mockMovies.where((m) => m.status == 'now_showing').toList();
-    final comingSoon =
-        mockMovies.where((m) => m.status == 'coming_soon').toList();
+    // XÓA: Dữ liệu mock
+    // final nowShowing =
+    //     mockMovies.where((m) => m.status == 'now_showing').toList();
+    // final comingSoon =
+    //     mockMovies.where((m) => m.status == 'coming_soon').toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -89,15 +94,51 @@ class _MovieScreenState extends State<MovieScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildMovieGrid(nowShowing),
-          _buildMovieGrid(comingSoon),
-        ],
+      // SỬA: Thay thế body bằng StreamBuilder
+      body: StreamBuilder<List<Movie>>(
+        stream: _firestoreService.getMoviesStream(), // <-- GỌI DỮ LIỆU THẬT
+        builder: (context, snapshot) {
+          // Trạng thái đang tải
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryColor));
+          }
+          // Bị lỗi
+          if (snapshot.hasError) {
+            return Center(
+              child: Text("Lỗi tải phim: ${snapshot.error}",
+                  style: const TextStyle(color: Colors.white70)),
+            );
+          }
+          // Không có dữ liệu
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Text(
+                "Không có phim nào để hiển thị",
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+            );
+          }
+
+          // KHI CÓ DỮ LIỆU: Lọc danh sách phim (giống logic cũ của bạn)
+          final allMovies = snapshot.data!;
+          final nowShowing =
+              allMovies.where((m) => m.status == 'now_showing').toList();
+          final comingSoon =
+              allMovies.where((m) => m.status == 'coming_soon').toList();
+
+          // Trả về TabBarView với dữ liệu thật
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _buildMovieGrid(nowShowing),
+              _buildMovieGrid(comingSoon),
+            ],
+          );
+        },
       ),
 
-      // ✅ Thêm thanh điều hướng dưới cùng
+      // ✅ Thanh điều hướng dưới cùng (giữ nguyên)
       bottomNavigationBar: BottomNavBar(
         initialIndex: _currentIndex,
         onTap: (index) {
@@ -133,6 +174,7 @@ class _MovieScreenState extends State<MovieScreen>
   }
 
   // ======= Lưới phim (2 cột) =======
+  // (Giữ nguyên logic của bạn)
   Widget _buildMovieGrid(List<Movie> movies) {
     if (!_isLoading && movies.isEmpty) {
       return const Center(
@@ -198,14 +240,26 @@ class _MovieScreenState extends State<MovieScreen>
             // Ảnh phim
             Expanded(
               child: Hero(
-                tag: movie.title,
+                tag: movie.id, // SỬA: Dùng movie.id (luôn duy nhất)
                 child: ClipRRect(
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
-                  child: Image.asset(
+                  // SỬA: Dùng Image.network để tải ảnh từ link
+                  child: Image.network(
                     movie.posterUrl,
                     fit: BoxFit.cover,
+                    // THÊM: Hiển thị loading và xử lý lỗi
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return Center(
+                          child: CircularProgressIndicator(
+                              color: AppTheme.primaryColor));
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.movie_creation_outlined,
+                          color: Colors.white54, size: 40);
+                    },
                   ),
                 ),
               ),
