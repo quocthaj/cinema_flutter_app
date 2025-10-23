@@ -194,18 +194,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 12),
                 nowShowingMovies.isNotEmpty
                     ? SizedBox(
-                        height: 320,
+                        height: 340,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: nowShowingMovies.length,
                           itemBuilder: (context, index) {
                             final movie = nowShowingMovies[index];
                             return Padding(
                               padding: EdgeInsets.only(
-                                left: 16,
                                 right: index == nowShowingMovies.length - 1
-                                    ? 16
-                                    : 0,
+                                    ? 0
+                                    : 12,
                               ),
                               child: GestureDetector(
                                 onTap: () => _openMovieDetail(movie),
@@ -223,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(color: Colors.white70),
                         ),
                       ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 100),
               ],
             ),
           );
