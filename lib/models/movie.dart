@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Movie {
   final String id;
   final String title;
@@ -7,7 +9,8 @@ class Movie {
   final String posterUrl;
   final String status; // now_showing | coming_soon
   final String releaseDate;
-  final String description; // ✅ thêm dòng này
+  final String description;
+  final String trailerUrl; // Thêm trường này để phát trailer
 
   Movie({
     required this.id,
@@ -18,34 +21,27 @@ class Movie {
     required this.posterUrl,
     required this.status,
     required this.releaseDate,
-    required this.description, // ✅ thêm dòng này
+    required this.description,
+    required this.trailerUrl,
   });
 
-  factory Movie.fromJson(Map<String, dynamic> json) {
-    return Movie(
-      id: json['id'],
-      title: json['title'],
-      genre: json['genre'],
-      duration: json['duration'],
-      rating: (json['rating'] as num).toDouble(),
-      posterUrl: json['posterUrl'],
-      status: json['status'],
-      releaseDate: json['releaseDate'],
-      description: json['description'] ?? "", // ✅ thêm dòng này
-    );
-  }
+  /// Hàm Factory: Chuyển đổi một DocumentSnapshot từ Firestore thành một đối tượng Movie.
+  /// Đây là phần quan trọng nhất để đọc dữ liệu.
+  factory Movie.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-  Map<String, dynamic> toJson() {
-    return {
-      "id": id,
-      "title": title,
-      "genre": genre,
-      "duration": duration,
-      "rating": rating,
-      "posterUrl": posterUrl,
-      "status": status,
-      "releaseDate": releaseDate,
-      "description": description, // ✅ thêm dòng này
-    };
+    return Movie(
+      id: doc.id,
+      title: data['title'] ?? '',
+      description: data['description'] ?? 'Không có mô tả.',
+      posterUrl: data['posterUrl'] ?? '',
+      trailerUrl: data['trailerUrl'] ?? '',
+      genre: data['genre'] ?? 'Chưa phân loại',
+      // Dùng (num) để chấp nhận cả int và double từ Firestore, sau đó chuyển đổi
+      duration: (data['duration'] ?? 0).toInt(),
+      rating: (data['rating'] ?? 0.0).toDouble(),
+      status: data['status'] ?? 'coming_soon',
+      releaseDate: data['releaseDate'] ?? 'Đang cập nhật',
+    );
   }
 }

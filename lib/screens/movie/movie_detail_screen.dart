@@ -25,12 +25,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     _checkLoginStatus();
   }
 
+  // Logic này của bạn đã đúng (dùng currentUser getter)
   void _checkLoginStatus() {
     try {
-      // SỬA: Lấy user từ getter (không cần await)
       final user = _authService.currentUser;
       setState(() {
-        // SỬA: Kiểm tra user có null hay không
         _isLoggedIn = (user != null);
         _isLoading = false;
       });
@@ -39,7 +38,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     }
   }
 
-  // ⭐ Widget hiển thị Rating
+  // ⭐ Widget hiển thị Rating (Giữ nguyên)
   Widget _buildRating(double rating) {
     return Row(
       children: [
@@ -55,7 +54,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     );
   }
 
-  // 🎬 Widget hiển thị chip thông tin
+  // 🎬 Widget hiển thị chip thông tin (Giữ nguyên)
   Widget _buildInfoChip(IconData icon, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -76,7 +75,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     );
   }
 
-  // 🎟️ Nút đặt vé (chỉ kiểm tra khi nhấn)
+  // 🎟️ Nút đặt vé (Giữ nguyên logic của bạn, đã đúng)
   Widget _buildBookingButton(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -101,7 +100,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   context,
                   MaterialPageRoute(builder: (_) => const LoginScreen()),
                 );
-                // SỬA: Xóa await vì hàm _checkLoginStatus không còn là Future
+                // Cập nhật lại trạng thái login (logic này đã đúng)
                 _checkLoginStatus();
               } else {
                 // Nếu đã đăng nhập → đến BookingScreen
@@ -157,7 +156,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 ),
               ),
               background: Hero(
-                tag: movie.id,
+                tag: movie.id, // Tag này đã đúng
                 child: ShaderMask(
                   shaderCallback: (rect) => const LinearGradient(
                     begin: Alignment.topCenter,
@@ -165,17 +164,32 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                     colors: [Colors.transparent, Colors.black87],
                   ).createShader(rect),
                   blendMode: BlendMode.darken,
-                  child: Image.asset(
+                  //
+                  // SỬA ĐỔI DUY NHẤT NẰM Ở ĐÂY
+                  //
+                  child: Image.network(
+                    // <-- SỬA: Đổi từ Image.asset
                     movie.posterUrl,
                     fit: BoxFit.cover,
                     width: double.infinity,
+                    // THÊM: loadingBuilder và errorBuilder
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return Center(
+                          child: CircularProgressIndicator(
+                              color: AppTheme.primaryColor));
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.movie_creation_outlined,
+                          color: Colors.white54, size: 50);
+                    },
                   ),
                 ),
               ),
             ),
           ),
 
-          // 🔹 Nội dung
+          // 🔹 Nội dung (Giữ nguyên)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),

@@ -15,6 +15,7 @@ import '../theater/theaters_screen.dart';
 import '../news/news_and_promotions_screen.dart';
 import '../../config/theme.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // <-- DÒNG NÀY
+import '../../services/firestore_service.dart'; // <-- THÊM DÒNG NÀY
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,10 +26,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _authService = AuthService();
-  int _currentIndex = 2;
+  final _firestoreService = FirestoreService(); // <-- THÊM
+  int _currentIndex = 2; // Home là tab giữa
 
   bool _isLoggedIn = false;
-  bool _isLoading = true;
+  bool _isLoadingUserData = true; // Đổi tên biến loading
 
   String _userName = '';
   String _userEmail = '';
@@ -52,54 +54,48 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Logic load user data đã đúng
   void _loadUserData() {
     try {
-      // SỬA: Lấy user từ getter (không cần await)
       final User? user = _authService.currentUser;
-
       setState(() {
         if (user != null) {
-          // SỬA: Lấy thông tin từ đối tượng User
           _userName = user.displayName ?? 'Bạn';
           _userEmail = user.email ?? '';
           _isLoggedIn = true;
         } else {
-          // Nếu user là null
           _userName = 'Khách';
           _userEmail = '';
           _isLoggedIn = false;
         }
-        _isLoading = false;
+        _isLoadingUserData = false;
       });
     } catch (e) {
       setState(() {
-        // Xử lý nếu có lỗi
         _userName = 'Khách';
         _userEmail = '';
         _isLoggedIn = false;
-        _isLoading = false;
+        _isLoadingUserData = false;
       });
     }
   }
 
+  // Logic sign out đã đúng
   Future<void> _signOut() async {
     await _authService.signOut();
-    setState(() {
-      _isLoggedIn = false;
-      _userName = 'Khách';
-      _userEmail = '';
-    });
+    // Không cần setState ở đây vì AuthWrapper sẽ tự xử lý chuyển màn hình
   }
 
-  List<Movie> get featuredMovies =>
-      mockMovies.where((m) => m.rating >= 8.0).toList();
+  // XÓA: Getter featuredMovies vì sẽ lấy từ StreamBuilder
+  // List<Movie> get featuredMovies => ...
 
+  // Logic open movie detail đã đúng
   void _openMovieDetail(Movie movie) {
     if (!_isLoggedIn) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
-      ).then((_) => _loadUserData());
+      ).then((_) => _loadUserData()); // Load lại user data sau khi login
       return;
     }
     Navigator.push(
@@ -110,7 +106,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    // Hiển thị loading chỉ khi đang tải user data
+    if (_isLoadingUserData) {
       return Scaffold(
         body: Center(
           child: CircularProgressIndicator(color: AppTheme.primaryColor),
@@ -126,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onLogout: _signOut,
       ),
 
-      // ====== APPBAR ======
+      // ====== APPBAR (Giữ nguyên) ======
       appBar: AppBar(
         title: Text(
           "Xin chào, $_userName 👋",
@@ -156,132 +153,193 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       // ====== BODY ======
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 🔥 Banner Auto Slide
-            Stack(
-              alignment: Alignment.bottomCenter,
+      body: StreamBuilder<List<Movie>>(
+        // <-- THAY THẾ: Dùng StreamBuilder ở đây
+        stream: _firestoreService.getMoviesStream(),
+        builder: (context, snapshot) {
+          // Trạng thái tải phim
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryColor));
+          }
+          // Lỗi tải phim
+          if (snapshot.hasError) {
+            return Center(
+                child: Text("Lỗi tải phim: ${snapshot.error}",
+                    style: const TextStyle(color: Colors.white70)));
+          }
+          // Không có phim
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+                child: Text("Hiện chưa có phim nào.",
+                    style: TextStyle(color: Colors.white70)));
+          }
+
+          // KHI CÓ DỮ LIỆU PHIM: Lọc ra danh sách
+          final allMovies = snapshot.data!;
+          final featuredMovies =
+              allMovies.where((m) => m.rating >= 8.0).toList();
+          final nowShowingMovies =
+              allMovies.where((m) => m.status == 'now_showing').toList();
+
+          // Trả về nội dung chính của trang chủ
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CarouselSlider(
-                  options: CarouselOptions(
-                    autoPlay: true,
-                    height: 200,
-                    enlargeCenterPage: true,
-                    viewportFraction: 0.9,
-                    autoPlayInterval: const Duration(seconds: 4),
-                    onPageChanged: (index, _) {
-                      setState(() => _currentBanner = index);
-                    },
+                // 🔥 Banner Auto Slide (Giữ nguyên)
+                Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    CarouselSlider(
+                      options: CarouselOptions(
+                        autoPlay: true,
+                        height: 200,
+                        enlargeCenterPage: true,
+                        viewportFraction: 0.9,
+                        autoPlayInterval: const Duration(seconds: 4),
+                        onPageChanged: (index, _) {
+                          setState(() => _currentBanner = index);
+                        },
+                      ),
+                      items: _banners.map((img) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            // Banner vẫn dùng ảnh local
+                            img,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: _banners.asMap().entries.map((entry) {
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          width: _currentBanner == entry.key ? 10 : 6,
+                          height: 6,
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 3),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _currentBanner == entry.key
+                                ? AppTheme.primaryColor
+                                : Colors.white38,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // 🎬 PHIM NỔI BẬT (Dùng featuredMovies từ Firebase)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    "🔥 Phim nổi bật",
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  items: _banners.map((img) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        img,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      ),
-                    );
-                  }).toList(),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: _banners.asMap().entries.map((entry) {
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      width: _currentBanner == entry.key ? 10 : 6,
-                      height: 6,
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 3),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _currentBanner == entry.key
-                            ? AppTheme.primaryColor
-                            : Colors.white38,
+                const SizedBox(height: 12),
+
+                // Hiển thị PageView nếu có phim nổi bật
+                featuredMovies.isNotEmpty
+                    ? SizedBox(
+                        height: 444, // Chiều cao khít với card
+                        child: PageView.builder(
+                          controller: _pageController,
+                          // itemCount dùng danh sách thật, infinite scroll giữ nguyên
+                          itemCount: featuredMovies.length * 1000,
+                          itemBuilder: (context, index) {
+                            final actualIndex = index % featuredMovies.length;
+                            final movie = featuredMovies[actualIndex];
+                            final movieNumber = actualIndex + 1;
+
+                            final scale =
+                                (1 - ((_currentPage - index).abs() * 0.2))
+                                    .clamp(0.8, 1.0);
+                            final rotation = (_currentPage - index) * 0.3;
+
+                            return Transform(
+                              alignment: Alignment.center,
+                              transform: Matrix4.identity()
+                                ..rotateY(rotation)
+                                ..scale(scale, scale),
+                              child: GestureDetector(
+                                onTap: () => _openMovieDetail(movie),
+                                child:
+                                    _buildFeaturedMovieCard(movie, movieNumber),
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    : const Padding(
+                        // Nếu không có phim nổi bật
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                        child: Text("Chưa có phim nổi bật.",
+                            style: TextStyle(color: Colors.white70)),
                       ),
-                    );
-                  }).toList(),
+
+                const SizedBox(height: 24),
+
+                // 🎥 PHIM ĐANG CHIẾU (Dùng nowShowingMovies từ Firebase)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    "🎥 Phim đang chiếu",
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                 ),
+                const SizedBox(height: 12),
+
+                // Hiển thị ListView nếu có phim đang chiếu
+                nowShowingMovies.isNotEmpty
+                    ? SizedBox(
+                        height: 320, // Chiều cao của MovieCard
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: nowShowingMovies.length,
+                          itemBuilder: (context, index) {
+                            final movie = nowShowingMovies[index];
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                  left: 16,
+                                  right: index == nowShowingMovies.length - 1
+                                      ? 16
+                                      : 0 // Padding cuối cùng
+                                  ),
+                              child: GestureDetector(
+                                onTap: () => _openMovieDetail(movie),
+                                // Giả sử MovieCard đã được sửa để dùng Image.network
+                                child: MovieCard(movie: movie),
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    : const Padding(
+                        // Nếu không có phim đang chiếu
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                        child: Text("Chưa có phim đang chiếu.",
+                            style: TextStyle(color: Colors.white70)),
+                      ),
+
+                const SizedBox(height: 30),
               ],
             ),
-
-            const SizedBox(height: 20),
-
-            // 🎬 PHIM NỔI BẬT
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                "🔥 Phim nổi bật",
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            SizedBox(
-              height: 444, // Chiều cao khít với card
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: featuredMovies.length * 1000, // Infinite scroll
-                itemBuilder: (context, index) {
-                  final actualIndex = index % featuredMovies.length;
-                  final movie = featuredMovies[actualIndex];
-                  final movieNumber = actualIndex + 1; // Số thứ tự từ 1-N
-
-                  final scale = (1 - ((_currentPage - index).abs() * 0.2))
-                      .clamp(0.8, 1.0);
-                  final rotation = (_currentPage - index) * 0.3;
-
-                  return Transform(
-                    alignment: Alignment.center,
-                    transform: Matrix4.identity()
-                      ..rotateY(rotation)
-                      ..scale(scale, scale),
-                    child: GestureDetector(
-                      onTap: () => _openMovieDetail(movie),
-                      child: _buildFeaturedMovieCard(movie, movieNumber),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // 🎥 PHIM ĐANG CHIẾU
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                "🎥 Phim đang chiếu",
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            SizedBox(
-              height: 320,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: mockMovies.length,
-                itemBuilder: (context, index) {
-                  final movie = mockMovies[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 16),
-                    child: GestureDetector(
-                      onTap: () => _openMovieDetail(movie),
-                      child: MovieCard(movie: movie),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 30),
-          ],
-        ),
+          );
+        },
       ),
 
-      // ====== BOTTOM NAV ======
+      // ====== BOTTOM NAV (Giữ nguyên) ======
       bottomNavigationBar: BottomNavBar(
         initialIndex: _currentIndex,
         onTap: (index) {
@@ -321,8 +379,9 @@ class _HomeScreenState extends State<HomeScreen> {
         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         height: 428, // Cắt khít hoàn toàn
         child: ClipPath(
-          clipper: TicketCardClipper(),
+          clipper: TicketCardClipper(), // Giữ nguyên Clipper của bạn
           child: Container(
+            // ... (Phần decoration giữ nguyên) ...
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -355,14 +414,32 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(20),
                         ),
-                        child: Image.asset(
+                        // SỬA: Dùng Image.network
+                        child: Image.network(
                           movie.posterUrl,
                           height: 280, // Giảm poster
                           width: double.infinity,
                           fit: BoxFit.cover,
+                          // THÊM: loadingBuilder và errorBuilder
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return SizedBox(
+                                // Container để giữ chỗ khi loading
+                                height: 280,
+                                child: Center(
+                                    child: CircularProgressIndicator(
+                                        color: AppTheme.primaryColor)));
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return const SizedBox(
+                                // Container giữ chỗ khi lỗi
+                                height: 280,
+                                child: Icon(Icons.movie_creation_outlined,
+                                    color: Colors.white54, size: 50));
+                          },
                         ),
                       ),
-                      // Số thứ tự
+                      // Số thứ tự (Giữ nguyên)
                       Positioned(
                         bottom: 12,
                         right: 12,
@@ -395,7 +472,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
 
-                  // === PHẦN GIỮA: Thông tin phim (TRÊN line cắt) ===
+                  // === PHẦN GIỮA: Thông tin phim (Giữ nguyên) ===
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -413,7 +490,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Column(
                       children: [
-                        // Tên phim
                         Text(
                           movie.title.toUpperCase(),
                           textAlign: TextAlign.center,
@@ -428,8 +504,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 6),
-
-                        // Rating, thời lượng, ngày
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -462,9 +536,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             const SizedBox(width: 10),
-                            const Text(
-                              "03/10/2025",
-                              style: TextStyle(
+                            Text(
+                              // SỬA: Lấy ngày phát hành từ movie object
+                              movie.releaseDate,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.white70,
                               ),
@@ -475,17 +550,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                  // === ĐƯỜNG PHÂN CÁCH (line cắt) ===
+                  // === ĐƯỜNG PHÂN CÁCH (Giữ nguyên) ===
                   CustomPaint(
                     size: const Size(double.infinity, 2),
                     painter: DashedLinePainter(),
                   ),
 
-                  // === PHẦN DƯỚI: Button Đặt vé (DƯỚI line cắt) ===
+                  // === PHẦN DƯỚI: Button Đặt vé (Giữ nguyên) ===
                   Container(
-                    height: 78, // Mở rộng để lấp đầy khoảng trống
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                    height: 78,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
@@ -493,7 +568,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Color(0xFF7A2828),
                         ],
                       ),
-                      borderRadius: const BorderRadius.vertical(
+                      borderRadius: BorderRadius.vertical(
                         bottom: Radius.circular(20),
                       ),
                     ),
@@ -506,7 +581,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: Center(
                           child: Container(
-                            width: 180, // Kéo dài button
+                            width: 180,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 40,
                               vertical: 10,
@@ -544,112 +619,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Custom Clipper cho phần trên của ticket (có răng cưa ở dưới)
-class TicketTopClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    const double cornerRadius = 18.0;
-    const double notchRadius = 10.0;
-    const int notchCount = 8;
-
-    // Top left corner
-    path.moveTo(0, cornerRadius);
-    path.quadraticBezierTo(0, 0, cornerRadius, 0);
-
-    // Top edge
-    path.lineTo(size.width - cornerRadius, 0);
-
-    // Top right corner
-    path.quadraticBezierTo(size.width, 0, size.width, cornerRadius);
-
-    // Right edge
-    path.lineTo(size.width, size.height - notchRadius);
-
-    // Bottom edge with notches (răng cưa)
-    final double notchWidth = size.width / notchCount;
-    for (int i = notchCount; i >= 0; i--) {
-      final double x = i * notchWidth;
-      if (i < notchCount) {
-        path.lineTo(x + notchWidth / 2 + notchRadius, size.height);
-        path.arcToPoint(
-          Offset(x + notchWidth / 2 - notchRadius, size.height),
-          radius: const Radius.circular(notchRadius),
-          clockwise: false,
-        );
-      }
-      if (i > 0) {
-        path.lineTo(x, size.height);
-      }
-    }
-
-    // Left edge
-    path.lineTo(0, cornerRadius);
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
-
-// Custom Clipper cho phần dưới của ticket (có răng cưa ở trên)
-class TicketBottomClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    const double cornerRadius = 18.0;
-    const double notchRadius = 10.0;
-    const int notchCount = 8;
-
-    // Top edge with notches (răng cưa)
-    final double notchWidth = size.width / notchCount;
-    path.moveTo(0, 0);
-
-    for (int i = 0; i <= notchCount; i++) {
-      final double x = i * notchWidth;
-      if (i > 0) {
-        path.lineTo(x - notchWidth / 2 - notchRadius, 0);
-        path.arcToPoint(
-          Offset(x - notchWidth / 2 + notchRadius, 0),
-          radius: const Radius.circular(notchRadius),
-          clockwise: true,
-        );
-      }
-      if (i < notchCount) {
-        path.lineTo(x + notchWidth / 2, 0);
-      }
-    }
-
-    // Right edge
-    path.lineTo(size.width, size.height - cornerRadius);
-
-    // Bottom right corner
-    path.quadraticBezierTo(
-      size.width,
-      size.height,
-      size.width - cornerRadius,
-      size.height,
-    );
-
-    // Bottom edge
-    path.lineTo(cornerRadius, size.height);
-
-    // Bottom left corner
-    path.quadraticBezierTo(0, size.height, 0, size.height - cornerRadius);
-
-    // Left edge
-    path.lineTo(0, 0);
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
-
+// Các lớp Clipper và Painter giữ nguyên...
 // Custom Clipper cho toàn bộ ticket card với răng cưa hai bên
 class TicketCardClipper extends CustomClipper<Path> {
   @override

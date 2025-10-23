@@ -46,7 +46,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '639686351889',
     projectId: 'cinemabookingapp-afcc2',
     authDomain: 'cinemabookingapp-afcc2.firebaseapp.com',
-    databaseURL: 'https://cinemabookingapp-afcc2-default-rtdb.firebaseio.com',
     storageBucket: 'cinemabookingapp-afcc2.firebasestorage.app',
   );
 
@@ -55,7 +54,6 @@ class DefaultFirebaseOptions {
     appId: '1:639686351889:android:82f53ba2c08123e88e65b0',
     messagingSenderId: '639686351889',
     projectId: 'cinemabookingapp-afcc2',
-    databaseURL: 'https://cinemabookingapp-afcc2-default-rtdb.firebaseio.com',
     storageBucket: 'cinemabookingapp-afcc2.firebasestorage.app',
   );
 
@@ -64,7 +62,6 @@ class DefaultFirebaseOptions {
     appId: '1:639686351889:ios:b47613f43aadaa1a8e65b0',
     messagingSenderId: '639686351889',
     projectId: 'cinemabookingapp-afcc2',
-    databaseURL: 'https://cinemabookingapp-afcc2-default-rtdb.firebaseio.com',
     storageBucket: 'cinemabookingapp-afcc2.firebasestorage.app',
     iosBundleId: 'com.example.doanMobile',
   );
@@ -74,7 +71,6 @@ class DefaultFirebaseOptions {
     appId: '1:639686351889:ios:b47613f43aadaa1a8e65b0',
     messagingSenderId: '639686351889',
     projectId: 'cinemabookingapp-afcc2',
-    databaseURL: 'https://cinemabookingapp-afcc2-default-rtdb.firebaseio.com',
     storageBucket: 'cinemabookingapp-afcc2.firebasestorage.app',
     iosBundleId: 'com.example.doanMobile',
   );
@@ -85,7 +81,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '639686351889',
     projectId: 'cinemabookingapp-afcc2',
     authDomain: 'cinemabookingapp-afcc2.firebaseapp.com',
-    databaseURL: 'https://cinemabookingapp-afcc2-default-rtdb.firebaseio.com',
     storageBucket: 'cinemabookingapp-afcc2.firebasestorage.app',
   );
 }

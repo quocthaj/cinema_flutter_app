@@ -2,13 +2,22 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '/models/movie.dart';
 // Các import khác...
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // --- PHẦN QUẢN LÝ PHIM (ĐÃ CÓ) ---
-  // ... getMoviesStream() ...
+  // --- PHẦN QUẢN LÝ PHIM ---
+  Stream<List<Movie>> getMoviesStream() {
+    return _db
+        .collection('movies')
+        .snapshots() // Lắng nghe sự thay đổi
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Movie.fromFirestore(
+                doc)) // Chuyển đổi mỗi doc thành Movie object
+            .toList());
+  }
 
   // --- PHẦN QUẢN LÝ NGƯỜI DÙNG (MỚI) ---
 
