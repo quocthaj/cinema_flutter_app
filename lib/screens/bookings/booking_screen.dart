@@ -236,11 +236,36 @@ class _BookingScreenState extends State<BookingScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: Image.asset(
+                    child: Image.network(
                       widget.movie.posterUrl,
-                      height: 100, // Nhỏ hơn
-                      width: 70, // Nhỏ hơn
+                      height: 100,
+                      width: 70,
                       fit: BoxFit.cover,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return SizedBox(
+                          height: 100,
+                          width: 70,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppTheme.primaryColor,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 100,
+                          width: 70,
+                          color: AppTheme.cardColor,
+                          child: const Icon(
+                            Icons.movie_creation_outlined,
+                            color: Colors.white54,
+                            size: 30,
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 16),

@@ -13,7 +13,12 @@
           "package_name": "com.example.doan_mobile"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "639686351889-jl3b4t538dtg20a11r2pac2cj7ur8u5h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBASqiy7WYXNugPA259XuyEgBqVzIQmR-E"
@@ -21,7 +26,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "639686351889-jl3b4t538dtg20a11r2pac2cj7ur8u5h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "639686351889-068scgpjit8pt8sfiajf3f4uorvg26i1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.doanMobile"
+              }
+            }
+          ]
         }
       }
     }

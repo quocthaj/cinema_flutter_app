@@ -64,10 +64,34 @@ class MovieCard extends StatelessWidget {
                     const BorderRadius.vertical(top: Radius.circular(12)),
                 child: Hero(
                   tag: movie.id,
-                  child: Image.asset(
+                  child: Image.network(
                     movie.posterUrl,
                     width: cardWidth,
                     fit: BoxFit.cover,
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return Container(
+                        color: AppTheme.cardColor,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppTheme.primaryColor,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: AppTheme.cardColor,
+                        child: const Center(
+                          child: Icon(
+                            Icons.movie_creation_outlined,
+                            color: Colors.white54,
+                            size: 50,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),

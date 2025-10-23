@@ -1,12 +1,12 @@
+import 'package:doan_mobile/services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:shared_preferences/shared_preferences.dart'; // XÓA: Không dùng SharedPreferences nữa
 import 'config/theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
-import 'services/auth_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
-// THÊM: 2 import quan trọng để khởi động Firebase
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -14,11 +14,13 @@ void main() async {
   // Đảm bảo Flutter đã sẵn sàng
   WidgetsFlutterBinding.ensureInitialized();
 
-  // THÊM: Khởi động Firebase và ĐỢI nó hoàn tất
-  // Đây là dòng code sửa lỗi màn hình đỏ của bạn
+  //Khởi tạo firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  final prefs = await SharedPreferences.getInstance();
+  final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
   // XÓA: Toàn bộ logic SharedPreferences
   // final prefs = await SharedPreferences.getInstance();
