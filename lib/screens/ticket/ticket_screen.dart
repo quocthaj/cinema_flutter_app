@@ -75,11 +75,36 @@ class TicketScreen extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
+                  child: Image.network(
                     ticket.movie.posterUrl,
                     width: 80,
                     height: 120,
                     fit: BoxFit.cover,
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return SizedBox(
+                        width: 80,
+                        height: 120,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppTheme.primaryColor,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 80,
+                        height: 120,
+                        color: AppTheme.cardColor,
+                        child: const Icon(
+                          Icons.movie_creation_outlined,
+                          color: Colors.white54,
+                          size: 30,
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 16),

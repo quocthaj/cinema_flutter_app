@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
 import '../bookings/booking_screen.dart';
 import '../../models/movie.dart';
@@ -35,6 +36,38 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
+    }
+  }
+
+  // Mở trailer URL
+  Future<void> _openTrailer(String url) async {
+    if (url.isEmpty) return;
+
+    final Uri uri = Uri.parse(url);
+    
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication, // Mở trong browser/app bên ngoài
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Không thể mở link: $url"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Lỗi khi mở trailer: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -156,7 +189,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 ),
               ),
               background: Hero(
-                tag: movie.id, // Tag này đã đúng
+                tag: movie.id,
                 child: ShaderMask(
                   shaderCallback: (rect) => const LinearGradient(
                     begin: Alignment.topCenter,
@@ -164,15 +197,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                     colors: [Colors.transparent, Colors.black87],
                   ).createShader(rect),
                   blendMode: BlendMode.darken,
-                  //
-                  // SỬA ĐỔI DUY NHẤT NẰM Ở ĐÂY
-                  //
                   child: Image.network(
-                    // <-- SỬA: Đổi từ Image.asset
                     movie.posterUrl,
                     fit: BoxFit.cover,
                     width: double.infinity,
-                    // THÊM: loadingBuilder và errorBuilder
                     loadingBuilder: (context, child, progress) {
                       if (progress == null) return child;
                       return Center(
@@ -189,7 +217,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             ),
           ),
 
-          // 🔹 Nội dung (Giữ nguyên)
+          // 🔹 Nội dung
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -223,6 +251,126 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                         .bodyMedium
                         ?.copyWith(height: 1.5),
                   ),
+                  const SizedBox(height: 30),
+                  
+                  // 🎬 Trailer Section (nút mở link bên ngoài)
+                  if (movie.trailerUrl.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        Icon(Icons.play_circle_outline,
+                            color: AppTheme.primaryColor, size: 28),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Trailer",
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ],
+                    ),
+                    const Divider(color: Colors.white12, height: 15),
+                    const SizedBox(height: 10),
+                    InkWell(
+                      onTap: () => _openTrailer(movie.trailerUrl),
+                      child: Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppTheme.primaryColor.withOpacity(0.3),
+                              AppTheme.primaryColor.withOpacity(0.1),
+                            ],
+                          ),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withOpacity(0.5),
+                            width: 2,
+                          ),
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Background poster
+                            Positioned.fill(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.network(
+                                  movie.posterUrl,
+                                  fit: BoxFit.cover,
+                                  color: Colors.black.withOpacity(0.7),
+                                  colorBlendMode: BlendMode.darken,
+                                  loadingBuilder: (context, child, progress) {
+                                    if (progress == null) return child;
+                                    return Center(
+                                      child: CircularProgressIndicator(
+                                        color: AppTheme.primaryColor
+                                      )
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: AppTheme.cardColor,
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.movie_creation_outlined,
+                                          color: Colors.white54,
+                                          size: 40
+                                        )
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                            // Play button
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppTheme.primaryColor,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppTheme.primaryColor.withOpacity(0.5),
+                                        blurRadius: 20,
+                                        spreadRadius: 5,
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.play_arrow_rounded,
+                                    color: Colors.white,
+                                    size: 50,
+                                  ),
+                                ),
+                                const SizedBox(height: 15),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 10
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.6),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Text(
+                                    "Xem Trailer",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 100),
                 ],
               ),
