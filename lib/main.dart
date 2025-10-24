@@ -2,10 +2,7 @@ import 'package:doan_mobile/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:shared_preferences/shared_preferences.dart'; // XÓA: Không dùng SharedPreferences nữa
 import 'config/theme.dart';
-import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -18,13 +15,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  final prefs = await SharedPreferences.getInstance();
-  final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-
-  // XÓA: Toàn bộ logic SharedPreferences
-  // final prefs = await SharedPreferences.getInstance();
-  // final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
   // SỬA: Chạy MyApp mà không cần isLoggedIn
   runApp(const MyApp());
@@ -76,7 +66,7 @@ class AuthWrapper extends StatelessWidget {
         }
 
         // Chưa đăng nhập
-        return const LoginScreen();
+        return const HomeScreen();
       },
     );
   }

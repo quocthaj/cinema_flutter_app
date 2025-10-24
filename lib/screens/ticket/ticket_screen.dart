@@ -293,7 +293,7 @@ class TicketScreen extends StatelessWidget {
     Booking booking,
     FirestoreService firestoreService,
   ) async {
-    final results = await Future.wait([
+    final results = await Future.wait<Object?>([
       firestoreService.getMovieById(booking.movieId),
       firestoreService.getShowtimeById(booking.showtimeId),
       firestoreService.getTheaterById(booking.theaterId),

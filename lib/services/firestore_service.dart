@@ -365,6 +365,9 @@ class FirestoreService {
         'photoUrl': user.photoURL,
         'createdAt': FieldValue.serverTimestamp(),
         'favoriteMovies': [],
+        'phoneNumber': null,
+        'membershipLevel': 'Đồng',
+        'points': 0,
       });
     }
   }
@@ -381,6 +384,44 @@ class FirestoreService {
   /// Cập nhật thông tin user
   Future<void> updateUser(String userId, Map<String, dynamic> data) async {
     await _db.collection('users').doc(userId).update(data);
+  }
+
+  /// Lấy thông tin chi tiết của người dùng từ Firestore
+  Future<UserModel?> getUserDocument(String uid) async {
+    if (uid.isEmpty) return null;
+    try {
+      final doc = await _db.collection('users').doc(uid).get();
+      if (doc.exists) {
+        return UserModel.fromFirestore(doc);
+      } else {
+        return null;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Cập nhật thông tin người dùng trên Firestore
+  Future<void> updateUserData(
+      String uid, Map<String, dynamic> dataToUpdate) async {
+    if (uid.isEmpty) return;
+    try {
+      await _db.collection('users').doc(uid).update(dataToUpdate);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Lấy stream bookings của user
+  Stream<QuerySnapshot> getUserBookingsStream(String userId) {
+    if (userId.isEmpty) {
+      return const Stream.empty();
+    }
+    return _db
+        .collection('bookings')
+        .where('userId', isEqualTo: userId)
+        .orderBy('bookingTime', descending: true)
+        .snapshots();
   }
 
   /// Thêm phim yêu thích

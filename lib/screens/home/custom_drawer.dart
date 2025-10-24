@@ -28,7 +28,8 @@ class CustomDrawer extends StatelessWidget {
               ),
               child: SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -57,27 +58,27 @@ class CustomDrawer extends StatelessWidget {
                       Text(
                         "TNT CINEMA",
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          letterSpacing: 1.5,
-                        ),
+                              fontSize: 26,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              letterSpacing: 1.5,
+                            ),
                       ),
                       const SizedBox(height: 5),
                       Text(
                         "Premium Experience",
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 12,
-                          letterSpacing: 0.5,
-                        ),
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 12,
+                              letterSpacing: 0.5,
+                            ),
                       ),
                     ],
                   ),
                 ),
               ),
             ),
-            
+
             // Menu items với iOS style
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),

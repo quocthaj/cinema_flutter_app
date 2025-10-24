@@ -370,7 +370,7 @@ class _BookingScreenState extends State<BookingScreen> {
   /// ✅ NEW: Load screen and theater details
   Future<void> _loadShowtimeDetails(Showtime showtime) async {
     try {
-      final results = await Future.wait([
+      final results = await Future.wait<Object?>([
         _firestoreService.getScreenById(showtime.screenId),
         _firestoreService.getTheaterById(showtime.theaterId),
       ]);
