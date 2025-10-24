@@ -7,6 +7,10 @@ class UserModel {
   final String phone;
   final String avatarUrl;
   final DateTime createdAt;
+  // --- THÊM CÁC TRƯỜNG MỚI ---
+  final String? phoneNumber;
+  final String? membershipLevel;
+  final int? points; // Điểm thường là số nguyên
 
   UserModel({
     required this.id,
@@ -15,6 +19,10 @@ class UserModel {
     required this.phone,
     required this.avatarUrl,
     required this.createdAt,
+    // --- THÊM VÀO CONSTRUCTOR ---
+    this.phoneNumber,
+    this.membershipLevel,
+    this.points,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -37,5 +45,35 @@ class UserModel {
       'avatarUrl': avatarUrl,
       'createdAt': createdAt,
     };
+  }
+
+  // Factory constructor để tạo UserModel từ Firestore DocumentSnapshot
+  factory UserModel.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+    // Xử lý createdAt (có thể là Timestamp hoặc String)
+    DateTime createdAt;
+    if (data['createdAt'] is Timestamp) {
+      createdAt = (data['createdAt'] as Timestamp).toDate();
+    } else if (data['createdAt'] is String) {
+      createdAt =
+          DateTime.tryParse(data['createdAt'] as String) ?? DateTime.now();
+    } else {
+      createdAt = DateTime.now(); // Fallback
+    }
+
+    return UserModel(
+      uid: data['uid'] ?? '',
+      email: data['email'] ?? '',
+      displayName: data['displayName'],
+      photoUrl: data['photoUrl'],
+      createdAt: createdAt,
+      // --- LẤY CÁC TRƯỜNG MỚI TỪ FIRESTORE ---
+      phoneNumber: data['phoneNumber'],
+      membershipLevel: data['membershipLevel'],
+      points: data['points'] is int
+          ? data['points']
+          : (data['points']?.toInt() ?? 0), // Đảm bảo points là int
+    );
   }
 }
