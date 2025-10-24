@@ -8,11 +8,11 @@ class ShimmerLoading extends StatelessWidget {
   final double borderRadius;
 
   const ShimmerLoading({
-    Key? key,
+    super.key,
     required this.width,
     required this.height,
     this.borderRadius = 8.0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,7 @@ class ShimmerLoading extends StatelessWidget {
 class MovieCardShimmer extends StatelessWidget {
   final double imageHeight;
 
-  const MovieCardShimmer({Key? key, this.imageHeight = 180}) : super(key: key);
+  const MovieCardShimmer({super.key, this.imageHeight = 180});
 
   @override
   Widget build(BuildContext context) {

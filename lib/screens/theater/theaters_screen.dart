@@ -85,9 +85,9 @@ class _TheatersScreenState extends State<TheatersScreen> {
             child: ListTile(
               contentPadding: const EdgeInsets.all(12),
               leading: CircleAvatar(
-                child: Icon(Icons.theaters, color: AppTheme.primaryColor),
                 radius: 28,
                 backgroundColor: AppTheme.fieldColor,
+                child: Icon(Icons.theaters, color: AppTheme.primaryColor),
               ),
               title: Text(
                 theater.name,

@@ -136,8 +136,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: AppTheme.primaryColor),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return 'Vui lòng nhập email';
+                    }
                     if (!value.contains('@')) return 'Email không hợp lệ';
                     return null;
                   },
@@ -164,8 +165,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return 'Vui lòng nhập mật khẩu';
+                    }
                     return null;
                   },
                 ),

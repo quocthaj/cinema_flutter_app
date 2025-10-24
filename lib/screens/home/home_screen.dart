@@ -28,38 +28,31 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _authService = AuthService();
   final _firestoreService = FirestoreService();
-  int _currentIndex = 2; // Home là tab giữa
+  final int _currentIndex = 2; // Home là tab giữa
 
   // Banner carousel state
-  int _currentBanner = 0;
+  // Use ValueNotifier to avoid rebuilding whole screen when banner changes
+  final ValueNotifier<int> _currentBanner = ValueNotifier<int>(0);
+
   final List<String> _banners = [
     'lib/images/banner1.jpg',
     'lib/images/banner2.jpg',
     'lib/images/banner3.jpg',
   ];
 
-  // Featured movies carousel state
-  late PageController _pageController;
-  double _currentPage = 0;
-
-  // --- BỎ CÁC BIẾN STATE NÀY (sẽ được quản lý bởi StreamBuilder) ---
-  // bool _isLoggedIn = false;
-  // bool _isLoadingUserData = true;
-  // String _userName = '';
-  // String _userEmail = '';
+  // <-- Thêm: cache stream để tránh re-subscribe khi setState thay đổi banner/index
+  late final Stream<List<Movie>> _moviesStream;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(viewportFraction: 0.85);
-    _pageController.addListener(() {
-      setState(() => _currentPage = _pageController.page ?? 0);
-    });
+    // Khởi tạo 1 lần stream dùng cho StreamBuilder
+    _moviesStream = _firestoreService.getMoviesStream();
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _currentBanner.dispose(); // dispose notifier
     super.dispose();
   }
 
@@ -82,7 +75,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // --- 2. THÊM STREAMBUILDER CHO AUTH STATE ---
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, authSnapshot) {
@@ -138,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // ====== BODY (Dùng StreamBuilder cho Movies) ======
           body: StreamBuilder<List<Movie>>(
-            stream: _firestoreService.getMoviesStream(),
+            stream: _moviesStream,
             builder: (context, movieSnapshot) {
               // Trạng thái tải phim
               if (movieSnapshot.connectionState == ConnectionState.waiting) {
@@ -182,8 +174,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             enlargeCenterPage: true,
                             viewportFraction: 0.9,
                             autoPlayInterval: const Duration(seconds: 4),
+                            // update notifier only (no setState) to avoid rebuilding whole screen
                             onPageChanged: (index, _) {
-                              setState(() => _currentBanner = index);
+                              _currentBanner.value = index;
                             },
                           ),
                           items: _banners.map((img) {
@@ -197,23 +190,30 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           }).toList(),
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: _banners.asMap().entries.map((entry) {
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              width: _currentBanner == entry.key ? 10 : 6,
-                              height: 6,
-                              margin: const EdgeInsets.symmetric(
-                                  vertical: 8, horizontal: 3),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _currentBanner == entry.key
-                                    ? AppTheme.primaryColor
-                                    : Colors.white38,
-                              ),
+                        // Dots: listen only to _currentBanner (no parent rebuild)
+                        ValueListenableBuilder<int>(
+                          valueListenable: _currentBanner,
+                          builder: (context, current, _) {
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: _banners.asMap().entries.map((entry) {
+                                final isActive = current == entry.key;
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  width: isActive ? 10 : 6,
+                                  height: 6,
+                                  margin: const EdgeInsets.symmetric(
+                                      vertical: 8, horizontal: 3),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isActive
+                                        ? AppTheme.primaryColor
+                                        : Colors.white38,
+                                  ),
+                                );
+                              }).toList(),
                             );
-                          }).toList(),
+                          },
                         ),
                       ],
                     ),
@@ -231,36 +231,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 12),
 
                     featuredMovies.isNotEmpty
-                        ? SizedBox(
-                            height: 444, // Chiều cao khít với card
-                            child: PageView.builder(
-                              controller: _pageController,
-                              itemCount: featuredMovies.length * 1000,
-                              itemBuilder: (context, index) {
-                                final actualIndex =
-                                    index % featuredMovies.length;
-                                final movie = featuredMovies[actualIndex];
-                                final movieNumber = actualIndex + 1;
-
-                                final scale =
-                                    (1 - ((_currentPage - index).abs() * 0.2))
-                                        .clamp(0.8, 1.0);
-                                final rotation = (_currentPage - index) * 0.3;
-
-                                return Transform(
-                                  alignment: Alignment.center,
-                                  transform: Matrix4.identity()
-                                    ..rotateY(rotation)
-                                    ..scale(scale, scale),
-                                  child: GestureDetector(
-                                    // Sửa: Bỏ isLoggedIn
-                                    onTap: () => _openMovieDetail(movie),
-                                    child: _buildFeaturedMovieCard(
-                                        movie, movieNumber),
-                                  ),
-                                );
-                              },
-                            ),
+                        ? _FeaturedMoviesCarousel(
+                            featuredMovies: featuredMovies,
+                            onOpenMovieDetail: _openMovieDetail,
+                            buildCard: _buildFeaturedMovieCard,
                           )
                         : const Padding(
                             padding: EdgeInsets.symmetric(
@@ -384,13 +358,13 @@ class _HomeScreenState extends State<HomeScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                const Color(0xFF9B3232).withOpacity(0.3),
-                const Color(0xFF9B3232).withOpacity(0.6),
+                const Color(0xFF9B3232).withValues(alpha: 0.3),
+                const Color(0xFF9B3232).withValues(alpha: 0.6),
               ],
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -444,7 +418,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
+                              color: Colors.black.withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -476,8 +450,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        const Color(0xFF9B3232).withOpacity(0.85),
-                        const Color(0xFF9B3232).withOpacity(0.95),
+                        const Color(0xFF9B3232).withValues(alpha: 0.85),
+                        const Color(0xFF9B3232).withValues(alpha: 0.95),
                       ],
                     ),
                   ),
@@ -570,10 +544,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(30),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.5),
+                              color: Colors.white.withValues(alpha: 0.5),
                               width: 2,
                             ),
                           ),
@@ -684,7 +658,7 @@ class DashedLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.3)
+      ..color = Colors.white.withValues(alpha: 0.3)
       ..strokeWidth = 1.5;
 
     const double dashWidth = 8;
@@ -703,4 +677,94 @@ class DashedLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+// ============================================================
+// STATEFUL WIDGET RIÊNG CHO FEATURED MOVIES CAROUSEL
+// Để tránh rebuild khi parent setState
+// ============================================================
+class _FeaturedMoviesCarousel extends StatefulWidget {
+  final List<Movie> featuredMovies;
+  final Function(Movie) onOpenMovieDetail;
+  final Widget Function(Movie, int) buildCard;
+
+  const _FeaturedMoviesCarousel({
+    required this.featuredMovies,
+    required this.onOpenMovieDetail,
+    required this.buildCard,
+  });
+
+  @override
+  State<_FeaturedMoviesCarousel> createState() => _FeaturedMoviesCarouselState();
+}
+
+class _FeaturedMoviesCarouselState extends State<_FeaturedMoviesCarousel> {
+  PageController? _pageController;
+  double _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Khởi tạo PageController 1 LẦN DUY NHẤT khi widget được tạo
+    if (widget.featuredMovies.isNotEmpty) {
+      final initialPage = widget.featuredMovies.length * 500;
+      _pageController = PageController(
+        viewportFraction: 0.85,
+        initialPage: initialPage,
+      );
+      _currentPage = initialPage.toDouble();
+      
+      // Thêm listener - chỉ setState khi thực sự cần
+      _pageController!.addListener(() {
+        final page = _pageController!.page ?? 0;
+        // Chỉ update khi chênh lệch đủ lớn để tránh quá nhiều rebuild
+        if ((page - _currentPage).abs() > 0.05) {
+          if (mounted) {
+            setState(() => _currentPage = page);
+          }
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.featuredMovies.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return SizedBox(
+      height: 444,
+      child: PageView.builder(
+        controller: _pageController,
+        itemCount: widget.featuredMovies.length * 1000,
+        itemBuilder: (context, index) {
+          final actualIndex = index % widget.featuredMovies.length;
+          final movie = widget.featuredMovies[actualIndex];
+          final movieNumber = actualIndex + 1;
+          
+          // Tính toán scale và rotation dựa trên vị trí hiện tại
+          final scale = (1 - ((_currentPage - index).abs() * 0.2)).clamp(0.8, 1.0);
+          final rotation = (_currentPage - index) * 0.3;
+          
+          return Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..rotateY(rotation)
+              ..scale(scale),
+            child: GestureDetector(
+              onTap: () => widget.onOpenMovieDetail(movie),
+              child: widget.buildCard(movie, movieNumber),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }

@@ -5,7 +5,7 @@ import '/services/auth_service.dart'; // <-- Thay 'movie_app' bằng tên dự �
 import '/config/theme.dart'; // <-- Thêm import cho AppTheme
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();

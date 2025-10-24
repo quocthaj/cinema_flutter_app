@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '/services/auth_service.dart'; // <-- Thay 'movie_app' bằng tên dự án
 
 class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({Key? key}) : super(key: key);
+  const ForgotPasswordScreen({super.key});
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();

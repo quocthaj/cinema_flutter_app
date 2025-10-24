@@ -163,7 +163,7 @@ class TicketScreen extends StatelessWidget {
         if (!snapshot.hasData) {
           return Card(
             margin: const EdgeInsets.only(bottom: 20),
-            child: Container(
+            child: SizedBox(
               height: 150,
               child: const Center(child: CircularProgressIndicator()),
             ),

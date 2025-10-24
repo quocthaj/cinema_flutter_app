@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../reward/reward_screen.dart';
 import '../members/watched_movies_screen.dart';

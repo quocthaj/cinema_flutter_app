@@ -1,5 +1,6 @@
 import 'package:doan_mobile/screens/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
+// <-- not required but fine
 import '../../config/theme.dart';
 import '../../models/movie.dart';
 import '../movie/movie_detail_screen.dart';
@@ -79,22 +80,40 @@ class _MovieScreenState extends State<MovieScreen>
       ),
       // SỬA: Thay thế body bằng StreamBuilder
       body: StreamBuilder<List<Movie>>(
-        stream: _firestoreService.getMoviesStream(), // <-- GỌI DỮ LIỆU THẬT
+        stream: _firestoreService.getMoviesStream(),
         builder: (context, snapshot) {
-          // Trạng thái đang tải
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          // Nếu vừa có dữ liệu, tắt shimmer (sử dụng addPostFrame để không setState trong build)
+          if (snapshot.hasData && _isLoading) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!mounted) return;
+              setState(() => _isLoading = false);
+            });
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting && _isLoading) {
             return Center(
                 child: CircularProgressIndicator(color: AppTheme.primaryColor));
           }
-          // Bị lỗi
           if (snapshot.hasError) {
+            // Nếu lỗi, cũng tắt shimmer để hiển thị lỗi
+            if (_isLoading) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                setState(() => _isLoading = false);
+              });
+            }
             return Center(
               child: Text("Lỗi tải phim: ${snapshot.error}",
                   style: const TextStyle(color: Colors.white70)),
             );
           }
-          // Không có dữ liệu
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            if (_isLoading) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                setState(() => _isLoading = false);
+              });
+            }
             return const Center(
               child: Text(
                 "Không có phim nào để hiển thị",
