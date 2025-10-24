@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
-import '../../data/mock_theaters.dart';
+import '../../models/theater_model.dart';
+import '../../services/firestore_service.dart';
 import 'theater_detail_screen.dart';
 import '../home/bottom_nav_bar.dart';
 import '../movie/movie_screen.dart';
@@ -17,6 +18,7 @@ class TheatersScreen extends StatefulWidget {
 
 class _TheatersScreenState extends State<TheatersScreen> {
   int _currentIndex = 3; // ✅ "Rạp" là tab thứ 4 trong thanh điều hướng
+  final _firestoreService = FirestoreService();
 
   @override
   Widget build(BuildContext context) {
@@ -27,12 +29,54 @@ class _TheatersScreenState extends State<TheatersScreen> {
         ),
         centerTitle: true,
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: mockTheaters.length,
-        itemBuilder: (context, index) {
-          final theater = mockTheaters[index];
-          return Card(
+      body: StreamBuilder<List<Theater>>(
+        stream: _firestoreService.getTheatersStream(),
+        builder: (context, snapshot) {
+          // Loading state
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // Error state
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 60, color: AppTheme.errorColor),
+                  const SizedBox(height: 16),
+                  Text('Lỗi khi tải dữ liệu', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  Text(snapshot.error.toString(), style: TextStyle(color: AppTheme.textSecondaryColor)),
+                ],
+              ),
+            );
+          }
+
+          // Empty state
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.theaters_outlined, size: 60, color: AppTheme.textSecondaryColor),
+                  const SizedBox(height: 16),
+                  Text('Chưa có rạp nào', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  Text('Vui lòng seed data từ Admin panel', style: TextStyle(color: AppTheme.textSecondaryColor)),
+                ],
+              ),
+            );
+          }
+
+          // Success - Display theaters
+          final theaters = snapshot.data!;
+          return ListView.builder(
+            padding: const EdgeInsets.all(12),
+            itemCount: theaters.length,
+            itemBuilder: (context, index) {
+              final theater = theaters[index];
+              return Card(
             elevation: 4,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
@@ -41,9 +85,9 @@ class _TheatersScreenState extends State<TheatersScreen> {
             child: ListTile(
               contentPadding: const EdgeInsets.all(12),
               leading: CircleAvatar(
-                backgroundImage: NetworkImage(theater.logoUrl),
+                child: Icon(Icons.theaters, color: AppTheme.primaryColor),
                 radius: 28,
-                backgroundColor: Colors.white,
+                backgroundColor: AppTheme.fieldColor,
               ),
               title: Text(
                 theater.name,
@@ -69,6 +113,8 @@ class _TheatersScreenState extends State<TheatersScreen> {
               },
             ),
           );
+        },
+      );
         },
       ),
 

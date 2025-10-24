@@ -10,7 +10,7 @@ class Movie {
   final String status; // now_showing | coming_soon
   final String releaseDate;
   final String description;
-  final String trailerUrl; // Thêm trường này để phát trailer
+  final String trailerUrl;
 
   Movie({
     required this.id,
@@ -25,11 +25,8 @@ class Movie {
     required this.trailerUrl,
   });
 
-  /// Hàm Factory: Chuyển đổi một DocumentSnapshot từ Firestore thành một đối tượng Movie.
-  /// Đây là phần quan trọng nhất để đọc dữ liệu.
   factory Movie.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-
+    final data = doc.data() as Map<String, dynamic>;
     return Movie(
       id: doc.id,
       title: data['title'] ?? '',
@@ -37,11 +34,24 @@ class Movie {
       posterUrl: data['posterUrl'] ?? '',
       trailerUrl: data['trailerUrl'] ?? '',
       genre: data['genre'] ?? 'Chưa phân loại',
-      // Dùng (num) để chấp nhận cả int và double từ Firestore, sau đó chuyển đổi
       duration: (data['duration'] ?? 0).toInt(),
       rating: (data['rating'] ?? 0.0).toDouble(),
       status: data['status'] ?? 'coming_soon',
       releaseDate: data['releaseDate'] ?? 'Đang cập nhật',
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'genre': genre,
+      'duration': duration,
+      'rating': rating,
+      'posterUrl': posterUrl,
+      'status': status,
+      'releaseDate': releaseDate,
+      'description': description,
+      'trailerUrl': trailerUrl,
+    };
   }
 }

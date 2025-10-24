@@ -1,7 +1,6 @@
 import 'package:doan_mobile/screens/widgets/shimmer_loading.dart';
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
-import '../../data/mock_Data.dart';
 import '../../models/movie.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
@@ -11,7 +10,6 @@ import '../reward/reward_screen.dart';
 import '../theater/theaters_screen.dart';
 import '../home/bottom_nav_bar.dart';
 import '../news/news_and_promotions_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/firestore_service.dart';
 
 class MovieScreen extends StatefulWidget {
@@ -25,8 +23,7 @@ class _MovieScreenState extends State<MovieScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _authService = AuthService();
-  final _firestoreService =
-      FirestoreService(); // <-- THÊM: Khởi tạo FirestoreService
+  final _firestoreService = FirestoreService(); // <-- THÊM: Khởi tạo FirestoreService
   bool _isLoggedIn = false;
   int _currentIndex = 0; // ✅ "Phim" là tab đầu tiên trong thanh điều hướng
 

@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../config/theme.dart';
 import '../reward/reward_screen.dart';
 
 /// 🔹 BẢN MỚI — tương thích với HomeScreen

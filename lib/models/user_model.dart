@@ -1,29 +1,41 @@
-// lib/data/models/user_model.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserModel {
-  final String uid;
+  final String id;
+  final String name;
   final String email;
-  final String? displayName;
-  final String? photoUrl;
+  final String phone;
+  final String avatarUrl;
   final DateTime createdAt;
 
   UserModel({
-    required this.uid,
+    required this.id,
+    required this.name,
     required this.email,
-    this.displayName,
-    this.photoUrl,
+    required this.phone,
+    required this.avatarUrl,
     required this.createdAt,
   });
 
-  // Hàm để chuyển đổi đối tượng UserModel thành một Map, sẵn sàng để ghi vào Firestore
-  Map<String, dynamic> toJson() {
+  factory UserModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return UserModel(
+      id: doc.id,
+      name: data['name'] ?? '',
+      email: data['email'] ?? '',
+      phone: data['phone'] ?? '',
+      avatarUrl: data['avatarUrl'] ?? '',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
     return {
-      'uid': uid,
+      'name': name,
       'email': email,
-      'displayName': displayName,
-      'photoUrl': photoUrl,
-      'createdAt': createdAt.toIso8601String(),
-      'favoriteMovies': [], // Khởi tạo mảng phim yêu thích là rỗng
+      'phone': phone,
+      'avatarUrl': avatarUrl,
+      'createdAt': createdAt,
     };
   }
 }

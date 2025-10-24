@@ -16,6 +16,7 @@ import '../news/news_and_promotions_screen.dart';
 import '../../config/theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/firestore_service.dart';
+import '../admin/seed_data_screen.dart'; // 🆕 THÊM IMPORT NÀY
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -256,6 +257,21 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
         },
+      ),
+      // 🆕 THÊM FLOATING ACTION BUTTON ĐỂ MỞ ADMIN SCREEN
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const SeedDataScreen(),
+            ),
+          );
+        },
+        icon: const Icon(Icons.admin_panel_settings),
+        label: const Text('Admin'),
+        backgroundColor: Colors.deepPurple,
+        tooltip: 'Mở Admin Panel để seed dữ liệu',
       ),
     );
   }
