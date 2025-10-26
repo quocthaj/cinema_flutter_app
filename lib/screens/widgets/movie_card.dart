@@ -18,8 +18,12 @@ class MovieCard extends StatelessWidget {
   });
 
   void _handleBooking(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Chức năng đặt vé đang phát triển...")),
+    // Navigate to MovieDetailScreen for booking flow
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MovieDetailScreen(movie: movie),
+      ),
     );
   }
 
@@ -141,33 +145,48 @@ class MovieCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
 
-                    // Nút Đặt vé
+                    // Nút Đặt vé với ripple effect
                     SizedBox(
                       width: double.infinity,
                       height: 32,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(
-                              sigmaX: blurSigma, sigmaY: blurSigma),
-                          child: GestureDetector(
-                            onTap: () => _handleBooking(context),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: semiTransparentColor,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.3),
-                                  width: 1.0,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => _handleBooking(context),
+                          borderRadius: BorderRadius.circular(20),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(
+                                  sigmaX: blurSigma, sigmaY: blurSigma),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: semiTransparentColor,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.3),
+                                    width: 1.0,
+                                  ),
                                 ),
-                              ),
-                              alignment: Alignment.center,
-                              child: const Text(
-                                "Đặt vé",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                alignment: Alignment.center,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.confirmation_number_outlined,
+                                      size: 16,
+                                      color: Colors.white.withValues(alpha: 0.9),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      "Đặt vé ngay",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),

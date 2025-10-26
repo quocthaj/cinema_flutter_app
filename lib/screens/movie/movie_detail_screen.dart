@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../config/theme.dart';
-import '../bookings/booking_screen.dart';
 import '../../models/movie.dart';
 import '../auth/login_screen.dart';
 import '../../services/auth_service.dart';
+import 'cinema_selection_screen.dart'; // 🆕 Import CinemaSelectionScreen
 
 class MovieDetailScreen extends StatefulWidget {
   final Movie movie;
@@ -136,11 +136,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 // Cập nhật lại trạng thái login (logic này đã đúng)
                 _checkLoginStatus();
               } else {
-                // Nếu đã đăng nhập → đến BookingScreen
+                // 🆕 Movie-First Flow: Navigate to CinemaSelectionScreen
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => BookingScreen(movie: widget.movie),
+                    builder: (_) => CinemaSelectionScreen(movie: widget.movie),
                   ),
                 );
               }

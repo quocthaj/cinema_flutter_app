@@ -19,6 +19,26 @@ class TheatersScreen extends StatefulWidget {
 class _TheatersScreenState extends State<TheatersScreen> {
   int _currentIndex = 3; // ✅ "Rạp" là tab thứ 4 trong thanh điều hướng
   final _firestoreService = FirestoreService();
+  
+  // 🆕 Thêm: Group theaters by city
+  Map<String, List<Theater>> _groupTheatersByCity(List<Theater> theaters) {
+    final Map<String, List<Theater>> grouped = {};
+    
+    for (var theater in theaters) {
+      // Extract city from address (format: "123 Street, District, City")
+      final addressParts = theater.address.split(',');
+      final city = addressParts.length >= 3 
+          ? addressParts.last.trim() 
+          : 'Khác';
+      
+      if (!grouped.containsKey(city)) {
+        grouped[city] = [];
+      }
+      grouped[city]!.add(theater);
+    }
+    
+    return grouped;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,52 +89,106 @@ class _TheatersScreenState extends State<TheatersScreen> {
             );
           }
 
-          // Success - Display theaters
+          // Success - Display theaters grouped by city
           final theaters = snapshot.data!;
+          final groupedTheaters = _groupTheatersByCity(theaters);
+          final cities = groupedTheaters.keys.toList()..sort();
+          
           return ListView.builder(
             padding: const EdgeInsets.all(12),
-            itemCount: theaters.length,
-            itemBuilder: (context, index) {
-              final theater = theaters[index];
-              return Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            margin: const EdgeInsets.only(bottom: 14),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(12),
-              leading: CircleAvatar(
-                radius: 28,
-                backgroundColor: AppTheme.fieldColor,
-                child: Icon(Icons.theaters, color: AppTheme.primaryColor),
-              ),
-              title: Text(
-                theater.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: Text(
-                theater.address,
-                style: Theme.of(context).textTheme.bodyMedium,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              trailing: Icon(Icons.arrow_forward_ios,
-                  color: AppTheme.textSecondaryColor, size: 18),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => TheaterDetailScreen(theater: theater),
+            itemCount: cities.length,
+            itemBuilder: (context, cityIndex) {
+              final city = cities[cityIndex];
+              final cityTheaters = groupedTheaters[city]!;
+              
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // City Header
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.location_city, color: AppTheme.primaryColor, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          city,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${cityTheaters.length} rạp',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                );
-              },
-            ),
+                  
+                  // Theater Cards
+                  ...cityTheaters.map((theater) {
+                    return Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      margin: const EdgeInsets.only(bottom: 14),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(12),
+                        leading: CircleAvatar(
+                          radius: 28,
+                          backgroundColor: AppTheme.fieldColor,
+                          child: Icon(Icons.theaters, color: AppTheme.primaryColor),
+                        ),
+                        title: Text(
+                          theater.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          theater.address,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: Icon(Icons.arrow_forward_ios,
+                            color: AppTheme.textSecondaryColor, size: 18),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TheaterDetailScreen(theater: theater),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }),
+                  
+                  // Divider between cities
+                  if (cityIndex < cities.length - 1)
+                    Divider(
+                      height: 32,
+                      thickness: 1,
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
+                ],
+              );
+            },
           );
-        },
-      );
         },
       ),
 
