@@ -85,14 +85,73 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
     }
   }
 
+  /// Xóa một collection cụ thể
+  Future<void> _clearCollection(String collectionName, String displayName) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('⚠️ Xác nhận'),
+        content: Text('Bạn có muốn xóa collection "$displayName"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() {
+      _isLoading = true;
+      _statusMessage = 'Đang xóa $displayName...';
+    });
+
+    try {
+      await _seedService.clearCollection(collectionName);
+      setState(() {
+        _statusMessage = '✅ Đã xóa $displayName thành công!';
+      });
+    } catch (e) {
+      setState(() {
+        _statusMessage = '❌ Lỗi khi xóa $displayName: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Build button xóa một collection
+  Widget _buildClearCollectionButton(String collectionName, String displayName, IconData icon) {
+    return ElevatedButton.icon(
+      onPressed: _isLoading ? null : () => _clearCollection(collectionName, displayName),
+      icon: Icon(icon, size: 18),
+      label: Text(displayName),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        backgroundColor: Colors.red.shade700,
+        foregroundColor: Colors.white,
+        textStyle: const TextStyle(fontSize: 13),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🔧 Admin - Seed Data'),
+        title: const Text('🔧 Admin - Quản lý Data'),
         backgroundColor: Colors.deepPurple,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -120,9 +179,9 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Màn hình này chỉ dùng để thêm dữ liệu mẫu. '
+                      'Màn hình này chỉ dùng để thêm/xóa dữ liệu mẫu. '
                       'Không nên sử dụng trong production.',
-                      style: TextStyle(fontSize: 12),
+                      style: TextStyle(fontSize: 12, color: Colors.black87),
                     ),
                   ],
                 ),
@@ -131,6 +190,16 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
             
             const SizedBox(height: 24),
             
+            // 🟢 SECTION: THÊM DỮ LIỆU
+            Text(
+              '📥 THÊM DỮ LIỆU',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.green.shade700,
+              ),
+            ),
+            const SizedBox(height: 12),
+
             // Nút Seed All Data
             ElevatedButton.icon(
               onPressed: _isLoading ? null : _seedAllData,
@@ -146,21 +215,59 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
               ),
             ),
 
+            const SizedBox(height: 24),
+            const Divider(thickness: 2),
+            const SizedBox(height: 24),
+
+            // 🔴 SECTION: XÓA DỮ LIỆU
+            Text(
+              '🗑️ XÓA DỮ LIỆU',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.red.shade700,
+              ),
+            ),
             const SizedBox(height: 12),
 
-            // Nút Clear All Data
+            // Nút Clear All Data (NGUY HIỂM - ĐỎ)
             OutlinedButton.icon(
               onPressed: _isLoading ? null : _clearAllData,
               icon: const Icon(Icons.delete_forever),
               label: const Text(
-                'Xóa tất cả dữ liệu',
-                style: TextStyle(fontSize: 16),
+                '⚠️ XÓA TẤT CẢ DỮ LIỆU',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.all(16),
                 foregroundColor: Colors.red,
-                side: const BorderSide(color: Colors.red),
+                side: BorderSide(color: Colors.red, width: 2),
               ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Tiêu đề xóa từng collection
+            Text(
+              'Xóa từng collection:',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Colors.white70,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Buttons xóa từng collection
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildClearCollectionButton('movies', 'Phim', Icons.movie),
+                _buildClearCollectionButton('theaters', 'Rạp', Icons.theater_comedy),
+                _buildClearCollectionButton('screens', 'Phòng', Icons.meeting_room),
+                _buildClearCollectionButton('showtimes', 'Lịch chiếu', Icons.schedule),
+                _buildClearCollectionButton('bookings', 'Đặt vé', Icons.confirmation_number),
+                _buildClearCollectionButton('payments', 'Thanh toán', Icons.payment),
+              ],
             ),
 
             const SizedBox(height: 24),
@@ -194,7 +301,7 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
                 ),
               ),
 
-            const Spacer(),
+            const SizedBox(height: 24),
 
             // Hướng dẫn
             Card(
@@ -209,7 +316,7 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
                         Icon(Icons.info, color: Colors.blue.shade700),
                         const SizedBox(width: 8),
                         Text(
-                          'Hướng dẫn',
+                          'Hướng dẫn sử dụng',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.blue.shade700,
@@ -219,19 +326,27 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      '1. Nhấn "Thêm tất cả dữ liệu mẫu" để tạo:\n'
-                      '   • 5 phim\n'
-                      '   • 4 rạp chiếu\n'
-                      '   • 12 phòng chiếu\n'
-                      '   • Lịch chiếu trong 7 ngày\n\n'
-                      '2. Kiểm tra kết quả tại Firebase Console\n\n'
-                      '3. Nếu cần làm lại, xóa dữ liệu và seed lại',
-                      style: TextStyle(fontSize: 12),
+                      '📥 THÊM DỮ LIỆU:\n'
+                      '• Nhấn "Thêm tất cả dữ liệu mẫu" để tạo:\n'
+                      '  - 15 phim mẫu\n'
+                      '  - 18 rạp chiếu\n'
+                      '  - 72 phòng chiếu\n'
+                      '  - Lịch chiếu trong 7 ngày\n\n'
+                      '🗑️ XÓA DỮ LIỆU:\n'
+                      '• "XÓA TẤT CẢ": Xóa toàn bộ data (bookings, payments, showtimes, screens, theaters, movies)\n'
+                      '• Xóa từng collection: Chỉ xóa collection cụ thể\n\n'
+                      '💡 TIPS:\n'
+                      '• Nếu app bị lag/đen → Xóa bookings + payments trước\n'
+                      '• Nếu muốn làm lại hoàn toàn → Xóa tất cả rồi seed lại\n'
+                      '• Check Firebase Console để verify',
+                      style: TextStyle(fontSize: 12, color: Colors.black87),
                     ),
                   ],
                 ),
               ),
             ),
+
+            const SizedBox(height: 20),
           ],
         ),
       ),
