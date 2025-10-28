@@ -5,6 +5,7 @@ class MovieSeedData {
   static List<Map<String, dynamic>> get movies => [
     // Dữ liệu mẫu cho các phim đang chiếu
     {
+      "externalId": "cuc-vang-cua-ngoai",
       "title": "Cục Vàng Của Ngoại",
       "genre": "Gia đình, Tâm lý, Chính kịch",
       "duration": 119,
@@ -12,7 +13,7 @@ class MovieSeedData {
       "status": "now_showing",
       "releaseDate": "17/10/2025",
       "description": "Phim xoay quanh mối quan hệ 3 thế hệ: Bà - Mẹ - Cháu, khai thác những lát cắt cuộc sống đời thường, nhẹ nhàng về tình thân gia đình Việt Nam.",
-      "posterUrl": "https://www.cgv.vn/default/cuc-vang-cua-ngoai.html",
+      "posterUrl": "https://www.bhdstar.vn/wp-content/uploads/2025/10/referenceSchemeHeadOfficeallowPlaceHoldertrueheight700ldapp-8.jpg",
       "trailerUrl": "http://www.youtube.com/watch?v=BrCXRyAkwEw",
       "director": "Khương Ngọc",
       "cast": "Việt Hương, Hồng Đào, Lê Khánh, Băng Di, Lâm Thanh Mỹ, NSƯT Hữu Châu",
@@ -20,6 +21,7 @@ class MovieSeedData {
       "ageRating": "T13",
     },
     {
+      "externalId": "nha-ma-xo",
       "title": "Nhà Ma Xó",
       "genre": "Kinh Dị, Tâm linh, Gia đình",
       "duration": 108,
@@ -27,7 +29,7 @@ class MovieSeedData {
       "status": "now_showing",
       "releaseDate": "24/10/2025",
       "description": "Câu chuyện về bà Hiền, người một mình nuôi 3 người con. Mọi chuyện bắt đầu khi người con trai giữa (Quang Tuấn) vớt được một cái khạp sành đậy kín, từ đó những hiện tượng kỳ quái liên tiếp xảy ra.",
-      "posterUrl": "https://www.bhdstar.vn/phim/nha-ma-xo/",
+      "posterUrl": "https://www.bhdstar.vn/wp-content/uploads/2025/10/referenceSchemeHeadOfficeallowPlaceHoldertrueheight700ldapp-11.jpg",
       "trailerUrl": "http://www.youtube.com/watch?v=ZEq0D-Y0VeU",
       "director": "Trương Dũng",
       "cast": "Quang Tuấn, Huỳnh Đông, Vân Trang, Hoàng Kim Ngọc, Lan Thy",
@@ -35,6 +37,7 @@ class MovieSeedData {
       "ageRating": "T16",
     },
     {
+      "externalId": "tay-anh-giu-mot-vi-sao",
       "title": "Tay Anh Giữ Một Vì Sao (Love Barista)",
       "genre": "Tình cảm, Hài hước",
       "duration": 117,
@@ -42,7 +45,7 @@ class MovieSeedData {
       "status": "now_showing",
       "releaseDate": "03/10/2025",
       "description": "Ngôi sao hạng A Hàn Quốc Kang Jun Woo (Lee Kwang Soo) bị mắc kẹt tại Việt Nam vì thất lạc hộ chiếu. Anh vô tình chạm mặt Thảo (Hoàng Hà), một cô gái pha chế, và nhiều tình huống dở khóc dở cười bắt đầu.",
-      "posterUrl": "https://www.bhdstar.vn/phim/tay-anh-giu-mot-vi-sao/",
+      "posterUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8qLOZD-ExhjMH1GpriE63MNh3PJn8Cb6uNA&s",
       "trailerUrl": "https://www.youtube.com/watch?v=8l-6a_112CE",
       "director": "Kim Sung-hoon",
       "cast": "Lee Kwang-Soo, Hoàng Hà, Um Mun-suk, Duy Khánh",
@@ -50,6 +53,7 @@ class MovieSeedData {
       "ageRating": "K"
     },
     {
+      "externalId": "tee-yod-3",
       "title": "Tee Yod 3: Quỷ Ăn Tạng",
       "genre": "Kinh Dị",
       "duration": 104,
@@ -57,7 +61,7 @@ class MovieSeedData {
       "status": "now_showing",
       "releaseDate": "10/10/2025",
       "description": "Tiếp nối các sự kiện rùng rợn, lần này những oán linh, nghi lễ cổ xưa và bí mật đen tối dần trỗi dậy, biến hành trình giải cứu thành cơn ác mộng sinh tử.",
-      "posterUrl": "https://www.bhdstar.vn/phim/tee-yod-3/",
+      "posterUrl": "https://www.bhdstar.vn/wp-content/uploads/2025/10/referenceSchemeHeadOfficeallowPlaceHoldertrueheight700ldapp-2.jpg",
       "trailerUrl": "https://www.youtube.com/watch?v=Yf1nLhpyq9I",
       "director": "Narit Yuvaboon",
       "cast": "Nadech Kugimiya, Denise Jelilcha Kappun",
@@ -65,6 +69,7 @@ class MovieSeedData {
       "ageRating": "T16",
     },
     {
+      "externalId": "tu-chien-tren-khong",
       'title': 'Tử chiến trên không',
       'genre': 'Hành động, Hồi hộp',
       'duration': 118,
@@ -72,7 +77,7 @@ class MovieSeedData {
       "status": "now_showing",
       "releaseDate": "19/09/2025",
       "description": "Tử chiến trên không là phim điện ảnh hành động - kịch tính, được lấy cảm hứng từ vụ cướp máy bay có thật tại Việt Nam sau năm 1975",
-      "posterUrl": "https://www.bhdstar.vn/phim/tu-chien-tren-khong/",
+      "posterUrl": "https://www.bhdstar.vn/wp-content/uploads/2025/09/referenceSchemeHeadOfficeallowPlaceHoldertrueheight700ldapp-17.jpg",
       "trailerUrl": "https://www.youtube.com/watch?v=VLS9xSsfxkQ",
       "director": "Hàm Trần",
       "cast": "Thái Hòa, Kaity Nguyễn, Thanh Sơn, Xuân Phúc, Võ Điền Gia Huy, Trần Ngọc Vàng, Ma Ran Đô,...",
@@ -80,6 +85,7 @@ class MovieSeedData {
       "ageRating": "T16",
     },
     {
+      "externalId": "tron-ares",
       "title": "Trò Chơi Ảo Giác: Ares (Tron: Ares)",
       "genre": "Hành Động, Khoa Học Viễn Tưởng",
       "duration": 118,
@@ -87,7 +93,7 @@ class MovieSeedData {
       "status": "now_showing",
       "releaseDate": "10/10/2025",
       "description": "Ares, một chương trình tự nhận thức, vượt qua ranh giới từ thế giới kỹ thuật số để xâm nhập vào thế giới thực, thực hiện một nhiệm vụ nguy hiểm nhằm thay đổi nhân loại.",
-      "posterUrl": "https://www.bhdstar.vn/phim/tom-jerry-forbidden-compass/",
+      "posterUrl": "https://www.bhdstar.vn/wp-content/uploads/2025/10/referenceSchemeHeadOfficeallowPlaceHoldertrueheight700ldapp-4.jpg",
       "trailerUrl": "https://www.youtube.com/watch?v=Jdpr8t6-kiE",
       "director": "Joachim Rønning",
       "cast": "Jared Leto, Evan Peters, Greta Lee, Gillian Anderson, Jeff Bridges",
@@ -95,6 +101,7 @@ class MovieSeedData {
       "ageRating": "T13",
     },
     {
+      "externalId": "van-may",
       "title": "Vận May (Good Fortune)",
       "genre": "Hài, Hành Động, Giả Tưởng",
       "duration": 98,
@@ -102,7 +109,7 @@ class MovieSeedData {
       "status": "now_showing",
       "releaseDate": "17/10/2025",
       "description": "Một thiên thần hộ mệnh (Keanu Reeves) được giao nhiệm vụ giúp đỡ một anh chàng xui xẻo (Aziz Ansari) để anh ta có thể tráo đổi cuộc sống với một người giàu có (Seth Rogen).",
-      "posterUrl": "https://zalopay.vn/phim-chieu-rap-thang-10-6359",
+      "posterUrl": "https://www.bhdstar.vn/wp-content/uploads/2025/10/referenceSchemeHeadOfficeallowPlaceHoldertrueheight700ldapp-9.jpg",
       "trailerUrl": "https://www.youtube.com/watch?v=watch_placeholder_good_fortune",
       "director": "Aziz Ansari",
       "cast": "Keanu Reeves, Aziz Ansari, Seth Rogen, Keke Palmer",
@@ -110,6 +117,7 @@ class MovieSeedData {
       "ageRating": "T16",
     },
     {
+      "externalId": "to-quoc-trong-tim",
       "title": "Tổ quốc trong tim: The concert film",
       "genre": "Hòa nhạc, Phim tài liệu",
       "duration": 120,
@@ -127,6 +135,7 @@ class MovieSeedData {
     
     // Dữ liệu mẫu cho các phim sắp chiếu
     {
+      "externalId": "pha-dam-sinh-nhat-me",
       "title": "Phá Đám Sinh Nhật Mẹ",
       "genre": "Gia đình, Hài, Kịch tính",
       "duration": 91,
@@ -134,7 +143,7 @@ class MovieSeedData {
       "status": "coming_soon",
       "releaseDate": "31/10/2025",
       "description": "Để lừa tiền bảo hiểm, một người con trai đã lên kế hoạch làm đám ma giả cho mẹ mình. Trớ trêu thay, ngày anh đưa mẹ vào hòm lại chính là ngày sinh nhật 60 tuổi của bà.",
-      "posterUrl": "https://www.bhdstar.vn/phim/pha-dam-sinh-nhat-me/",
+      "posterUrl": "https://www.cgv.vn/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/3/5/350x495-pdsnm.jpg",
       "trailerUrl": "https://www.youtube.com/watch?v=oUsazD5lVx8",
       "director": "Nguyễn Thanh Bình",
       "cast": "Nghệ sĩ Ái Như, Thành Hội, Tín Nguyễn, Samuel An, Hồng Ánh, Huy Khánh",
@@ -142,6 +151,7 @@ class MovieSeedData {
       "ageRating": "T16"
     },
     {
+      "externalId": "dien-thoai-den-2",
       "title": "Điện Thoại Đen 2 (The Black Phone 2)",
       "genre": "Kinh Dị, Hồi hộp",
       "duration": 114,
@@ -149,7 +159,7 @@ class MovieSeedData {
       "status": "coming_soon",
       "releaseDate": "31/10/2025",
       "description": "Phần tiếp theo của bộ phim kinh dị ăn khách, tiếp tục khám phá những bí mật chết chóc liên quan đến tên sát nhân The Grabber và những nạn nhân của hắn.",
-      "posterUrl": "https://www.bhdstar.vn/phim/the-black-phone-2-dien-thoai-den/",
+      "posterUrl": "https://www.bhdstar.vn/wp-content/uploads/2025/10/referenceSchemeHeadOfficeallowPlaceHoldertrueheight700ldapp-2.png",
       "trailerUrl": "https://www.youtube.com/watch?v=watch_placeholder_blackphone2",
       "director": "Scott Derrickson",
       "cast": "Ethan Hawke, Mason Thames, Madeleine McGraw, Jeremy Davies",
@@ -157,6 +167,7 @@ class MovieSeedData {
       "ageRating": "T18"
     },
     {
+      "externalId": "cai-ma",
       "title": "Cải Mả",
       "genre": "Kinh Dị",
       "duration": 115,
@@ -164,7 +175,7 @@ class MovieSeedData {
       "status": "coming_soon",
       "releaseDate": "31/10/2025",
       "description": "Một nhóm bạn trẻ liều lĩnh thực hiện nghi thức cải mả vào ban đêm và vô tình giải phóng một thế lực tâm linh đen tối bị giam cầm từ lâu.",
-      "posterUrl": "https://www.cgv.vn/default/cai-ma.html",
+      "posterUrl": "https://www.cgv.vn/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/6/7/675wx1000h_1.jpg",
       "trailerUrl": "https://www.youtube.com/watch?v=watch_placeholder_caima",
       "director": "Thắng Vũ",
       "cast": "Rima Thanh Vy, Hoàng Phúc, Thúy Hạnh, Avin Lu, Kim Hải",
@@ -172,6 +183,7 @@ class MovieSeedData {
       "ageRating": "T16"
     },
     {
+      "externalId": "tinh-nguoi-duyen-ma",
       "title": "Tình Người Duyên Ma: Nhắm Mak Yêu Luôn",
       "genre": "Tình cảm, Hài, Kinh dị",
       "duration": 100,
@@ -179,7 +191,7 @@ class MovieSeedData {
       "status": "coming_soon",
       "releaseDate": "07/11/2025",
       "description": "Một phiên bản mới lấy cảm hứng từ truyền thuyết dân gian nổi tiếng của Thái Lan về hồn ma Mae Nak, kết hợp yếu tố hài hước và lãng mạn.",
-      "posterUrl": "https://vnpay.vn/ve-xem-phim/tinh-nguoi-duyen-ma-nham-mak-yeu-luon-t13-17137",
+      "posterUrl": "https://www.bhdstar.vn/wp-content/uploads/2025/10/referenceSchemeHeadOfficeallowPlaceHoldertrueheight700ldapp-6.png",
       "trailerUrl": "https://www.youtube.com/watch?v=watch_placeholder_pee_mak_2025",
       "director": "Choosak Iamsook",
       "cast": "Narilya Gulmongkolpech, Perawat Sangpotirat, Choosak Iamsook",
@@ -187,6 +199,7 @@ class MovieSeedData {
       "ageRating": "T13"
     },
     {
+      "externalId": "truy-tim-long-dien-huong",
       "title": "Truy Tìm Long Diên Hương",
       "genre": "Hành Động, Hài",
       "duration": 105,
@@ -194,7 +207,7 @@ class MovieSeedData {
       "status": "coming_soon",
       "releaseDate": "14/11/2025",
       "description": "Một cuộc phiêu lưu hành động bùng nổ xoay quanh Long Diên Hương - một báu vật huyền thoại của biển cả mà nhiều phe phái săn lùng.",
-      "posterUrl": "https://nld.com.vn/tu-khoa-hot-tren-mang-goi-ten-truy-tim-long-dien-huong-196250918112455345.htm",
+      "posterUrl": "https://www.cgv.vn/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/t/r/truy_t_m_long_di_n_h_ng_-_teaser_poster_-_kc_14.11.2025.jpg",
       "trailerUrl": "https://www.youtube.com/watch?v=watch_placeholder_longdienhuong",
       "director": "Dương Minh Chiến",
       "cast": "Quang Tuấn, Ma Ran Đô, Nguyên Thảo, Hoàng Tóc Dài, Doãn Quốc Đam",
@@ -202,6 +215,7 @@ class MovieSeedData {
       "ageRating": "T16"
     },
     {
+      "externalId": "zootopia-2",
       "title": "Zootopia 2: Phi Vụ Động Trời 2",
       "genre": "Hoạt Hình, Phiêu Lưu, Hài",
       "duration": 102,
@@ -209,7 +223,7 @@ class MovieSeedData {
       "status": "coming_soon",
       "releaseDate": "26/11/2025",
       "description": "Hai đặc vụ Judy Hopps và Nick Wilde trở lại trong một cuộc điều tra mới tại Zootopia, khám phá những khu vực mới của thành phố và đối mặt với những nhân vật mới.",
-      "posterUrl": "https://www.sortiraparis.com/vi/so-thich/dien-anh-phim-truyen-hinh/articles/319875-phim-zootopia-2-2025",
+      "posterUrl": "https://www.cgv.vn/media/catalog/product/cache/1/image/1800x/71252117777b696995f01934522c402d/z/o/zootopia_2_-_teaser_poster_up.jpg",
       "trailerUrl": "http://www.youtube.com/watch?v=5AwtptT8X8k",
       "director": "Jared Bush, Byron Howard",
       "cast": "Ginnifer Goodwin (lồng tiếng), Jason Bateman (lồng tiếng), Ke Huy Quan (lồng tiếng)",
@@ -217,6 +231,7 @@ class MovieSeedData {
       "ageRating": "P"
     },
     {
+      "externalId": "avatar-3",
       "title": "Avatar 3: Lửa Và Tro Tàn",
       "genre": "Khoa Học Viễn Tưởng, Giả Tưởng, Phiêu Lưu",
       "duration": 190,
@@ -224,7 +239,7 @@ class MovieSeedData {
       "status": "coming_soon",
       "releaseDate": "19/12/2025",
       "description": "Phần 3 giới thiệu 'Tộc Tro' (Ash people), một tộc người Na'vi đại diện cho yếu tố lửa. Jake và Neytiri phải đối mặt với một mối đe dọa mới từ tộc người này và thủ lĩnh Varang.",
-      "posterUrl": "https://cinestar.com.vn/movie/08f82993-cd8f-4a40-99c4-9152e32b386a/",
+      "posterUrl": "https://www.cgv.vn/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/a/v/avatar3_teaser_poster_vietnam.jpg",
       "trailerUrl": "http://www.youtube.com/watch?v=xAVri1ZrnNM",
       "director": "James Cameron",
       "cast": "Sam Worthington, Zoe Saldaña, Sigourney Weaver, Kate Winslet, Oona Chaplin",

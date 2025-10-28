@@ -5,6 +5,7 @@ import 'seed/seed_movies_service.dart';
 import 'seed/seed_theaters_service.dart';
 import 'seed/seed_screens_service.dart';
 import 'seed/seed_showtimes_service.dart';
+import 'seed/sync_result.dart';
 
 /// Service để thêm dữ liệu mẫu vào Firestore
 /// Sử dụng một lần để khởi tạo database
@@ -17,6 +18,73 @@ class SeedDataService {
   final _theatersService = SeedTheatersService();
   final _screensService = SeedScreensService();
   final _showtimesService = SeedShowtimesService();
+
+  /// 🔄 SYNC TẤT CẢ DỮ LIỆU (Update/Add/Delete)
+  /// 
+  /// Đây là hàm chính để đồng bộ dữ liệu seed với Firestore
+  /// - Cập nhật các bản ghi đã có nếu có thay đổi
+  /// - Thêm mới các bản ghi còn thiếu
+  /// - Xóa các bản ghi không còn trong seed data
+  /// 
+  /// [dryRun] = true: Chỉ kiểm tra, không thực hiện thay đổi
+  Future<SyncResult> syncAllData({bool dryRun = false}) async {
+    try {
+      print('\n🔄 BẮT ĐẦU SYNC DỮ LIỆU...\n');
+      if (dryRun) {
+        print('⚠️  [DRY RUN MODE - Chỉ kiểm tra, không thực hiện thay đổi]\n');
+      }
+      print('⏳ Quá trình này có thể mất vài phút...\n');
+
+      final results = <SyncResult>[];
+
+      // 1. Sync movies
+      final movieResult = await _moviesService.syncMovies(dryRun: dryRun);
+      results.add(movieResult);
+      await Future.delayed(Duration(milliseconds: 500));
+
+      // 2. Sync theaters
+      final theaterResult = await _theatersService.syncTheaters(dryRun: dryRun);
+      results.add(theaterResult);
+      await Future.delayed(Duration(milliseconds: 500));
+
+      // 3. Sync screens (sử dụng theaterIds từ result)
+      // TODO: Implement syncScreens với externalId
+      print('⏭️  Screens chưa hỗ trợ sync - sử dụng seedScreens\n');
+      
+      // 4. Sync showtimes
+      // TODO: Implement syncShowtimes
+      print('⏭️  Showtimes chưa hỗ trợ sync - sử dụng seedShowtimes\n');
+
+      // Tổng kết
+      final totalResult = SyncResult.merge(results);
+      
+      print('\n' + '='*60);
+      print('📊 TỔNG KẾT SYNC TẤT CẢ DỮ LIỆU');
+      print('='*60);
+      print(totalResult.toString());
+      
+      if (totalResult.hasErrors) {
+        print('\n❌ CÁC LỖI:');
+        for (var error in totalResult.errors) {
+          print('  - $error');
+        }
+      }
+      
+      if (dryRun) {
+        print('\n💡 Để áp dụng thay đổi, chạy lại với dryRun=false');
+      } else {
+        print('\n✅ HOÀN THÀNH SYNC DỮ LIỆU!');
+        print('🎉 Bạn có thể vào Firebase Console để kiểm tra!');
+      }
+      print('='*60 + '\n');
+      
+      return totalResult;
+      
+    } catch (e) {
+      print('❌ Lỗi khi sync dữ liệu: $e');
+      rethrow;
+    }
+  }
 
   /// 🎬 Thêm dữ liệu mẫu cho Movies
   Future<List<String>> seedMovies() async {
@@ -42,10 +110,10 @@ class SeedDataService {
     await _showtimesService.seedShowtimes(movieIds, theaterIds, screenIds);
   }
 
-  /// 🚀 Thêm tất cả dữ liệu mẫu
+  /// 🚀 Thêm tất cả dữ liệu mẫu (LEGACY - dùng seed thay vì sync)
   Future<void> seedAllData() async {
     try {
-      print('\n🚀 BẮT ĐẦU SEED DỮ LIỆU...\n');
+      print('\n🚀 BẮT ĐẦU SEED DỮ LIỆU (LEGACY MODE)...\n');
       print('⏳ Quá trình này có thể mất vài phút...\n');
 
       // 1. Thêm movies

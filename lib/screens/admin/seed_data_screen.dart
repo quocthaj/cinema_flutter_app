@@ -15,6 +15,42 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
   bool _isLoading = false;
   String _statusMessage = '';
 
+  /// 🔄 SYNC tất cả dữ liệu (Update/Add/Delete)
+  Future<void> _syncAllData({bool dryRun = false}) async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage = dryRun 
+          ? 'Đang kiểm tra thay đổi (Dry Run)...'
+          : 'Đang đồng bộ dữ liệu...';
+    });
+
+    try {
+      final result = await _seedService.syncAllData(dryRun: dryRun);
+      setState(() {
+        _statusMessage = dryRun
+            ? '🔍 Dry Run hoàn thành!\n'
+              '  ➕ Sẽ thêm: ${result.added}\n'
+              '  🔄 Sẽ cập nhật: ${result.updated}\n'
+              '  🗑️  Sẽ xóa: ${result.deleted}\n'
+              '  ⏭️  Không đổi: ${result.unchanged}\n'
+              '\n💡 Nhấn "Sync Thực Tế" để áp dụng thay đổi.'
+            : '✅ Đồng bộ dữ liệu thành công!\n'
+              '  ➕ Đã thêm: ${result.added}\n'
+              '  🔄 Đã cập nhật: ${result.updated}\n'
+              '  🗑️  Đã xóa: ${result.deleted}\n'
+              '  ⏭️  Không đổi: ${result.unchanged}';
+      });
+    } catch (e) {
+      setState(() {
+        _statusMessage = '❌ Lỗi: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   /// Thêm tất cả dữ liệu mẫu
   Future<void> _seedAllData() async {
     setState(() {
@@ -192,7 +228,53 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
             
             // 🟢 SECTION: THÊM DỮ LIỆU
             Text(
-              '📥 THÊM DỮ LIỆU',
+              '📥 ĐỒNG BỘ DỮ LIỆU (SYNC)',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade700,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Nút Dry Run (Kiểm tra)
+            ElevatedButton.icon(
+              onPressed: _isLoading ? null : () => _syncAllData(dryRun: true),
+              icon: const Icon(Icons.preview),
+              label: const Text(
+                'Kiểm tra thay đổi (Dry Run)',
+                style: TextStyle(fontSize: 16),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(16),
+                backgroundColor: Colors.blue.shade600,
+                foregroundColor: Colors.white,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Nút Sync Thực Tế
+            ElevatedButton.icon(
+              onPressed: _isLoading ? null : () => _syncAllData(dryRun: false),
+              icon: const Icon(Icons.sync),
+              label: const Text(
+                'Đồng bộ thực tế (Update/Add/Delete)',
+                style: TextStyle(fontSize: 16),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(16),
+                backgroundColor: Colors.green.shade600,
+                foregroundColor: Colors.white,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+            const Divider(thickness: 2),
+            const SizedBox(height: 24),
+
+            // 🟡 SECTION: THÊM DỮ LIỆU (LEGACY)
+            Text(
+              '📥 THÊM DỮ LIỆU (LEGACY)',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.green.shade700,
@@ -326,7 +408,13 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      '📥 THÊM DỮ LIỆU:\n'
+                      '� ĐỒNG BỘ DỮ LIỆU (Recommended):\n'
+                      '• "Kiểm tra thay đổi": Xem những gì sẽ thay đổi mà không thực thi\n'
+                      '• "Đồng bộ thực tế": Update/Add/Delete dữ liệu theo seed files\n'
+                      '  - Update: Cập nhật bản ghi đã có nếu có thay đổi\n'
+                      '  - Add: Thêm mới bản ghi còn thiếu\n'
+                      '  - Delete: Xóa bản ghi không còn trong seed\n\n'
+                      '�📥 THÊM DỮ LIỆU (Legacy):\n'
                       '• Nhấn "Thêm tất cả dữ liệu mẫu" để tạo:\n'
                       '  - 15 phim mẫu\n'
                       '  - 18 rạp chiếu\n'
