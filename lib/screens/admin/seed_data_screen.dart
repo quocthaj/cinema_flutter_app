@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../services/seed_data_service.dart';
+import '../../services/seed/hardcoded_seed_service.dart';
 
 /// Màn hình Admin để quản lý seed data
 /// Chỉ dùng trong quá trình development
@@ -11,61 +11,42 @@ class SeedDataScreen extends StatefulWidget {
 }
 
 class _SeedDataScreenState extends State<SeedDataScreen> {
-  final _seedService = SeedDataService();
+  final _seedService = HardcodedSeedService();
   bool _isLoading = false;
   String _statusMessage = '';
+  double _progress = 0.0;
 
-  /// 🔄 SYNC tất cả dữ liệu (Update/Add/Delete)
-  Future<void> _syncAllData({bool dryRun = false}) async {
-    setState(() {
-      _isLoading = true;
-      _statusMessage = dryRun 
-          ? 'Đang kiểm tra thay đổi (Dry Run)...'
-          : 'Đang đồng bộ dữ liệu...';
-    });
-
-    try {
-      final result = await _seedService.syncAllData(dryRun: dryRun);
-      setState(() {
-        _statusMessage = dryRun
-            ? '🔍 Dry Run hoàn thành!\n'
-              '  ➕ Sẽ thêm: ${result.added}\n'
-              '  🔄 Sẽ cập nhật: ${result.updated}\n'
-              '  🗑️  Sẽ xóa: ${result.deleted}\n'
-              '  ⏭️  Không đổi: ${result.unchanged}\n'
-              '\n💡 Nhấn "Sync Thực Tế" để áp dụng thay đổi.'
-            : '✅ Đồng bộ dữ liệu thành công!\n'
-              '  ➕ Đã thêm: ${result.added}\n'
-              '  🔄 Đã cập nhật: ${result.updated}\n'
-              '  🗑️  Đã xóa: ${result.deleted}\n'
-              '  ⏭️  Không đổi: ${result.unchanged}';
-      });
-    } catch (e) {
-      setState(() {
-        _statusMessage = '❌ Lỗi: $e';
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  /// Thêm tất cả dữ liệu mẫu
+  /// Thêm tất cả dữ liệu mẫu (Hardcoded)
   Future<void> _seedAllData() async {
     setState(() {
       _isLoading = true;
-      _statusMessage = 'Đang thêm dữ liệu...';
+      _statusMessage = 'Đang thêm dữ liệu cứng...';
+      _progress = 0.0;
     });
 
-    try {
-      await _seedService.seedAllData();
+    // Set up progress callback
+    _seedService.onProgress = (progress, message) {
       setState(() {
-        _statusMessage = '✅ Thêm dữ liệu thành công!';
+        _progress = progress;
+        _statusMessage = message;
+      });
+    };
+
+    try {
+      await _seedService.seedAll();
+      setState(() {
+        _progress = 1.0;
+        _statusMessage = '✅ Thêm dữ liệu thành công!\n'
+            '  📽️  15 phim\n'
+            '  🎭 11 rạp chiếu (4 HN + 4 HCM + 3 ĐN)\n'
+            '  🪑 44 phòng chiếu (11 × 4)\n'
+            '  ⏰ ~1,848 suất chiếu (264/ngày × 7 ngày)\n'
+            '  ✅ KHÔNG TRÙNG GIỜ - Mỗi phòng mỗi giờ chỉ 1 suất';
       });
     } catch (e) {
       setState(() {
         _statusMessage = '❌ Lỗi: $e';
+        _progress = 0.0;
       });
     } finally {
       setState(() {
@@ -103,16 +84,27 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
     setState(() {
       _isLoading = true;
       _statusMessage = 'Đang xóa dữ liệu...';
+      _progress = 0.0;
     });
 
+    // Set up progress callback
+    _seedService.onProgress = (progress, message) {
+      setState(() {
+        _progress = progress;
+        _statusMessage = message;
+      });
+    };
+
     try {
-      await _seedService.clearAllData();
+      await _seedService.clearAll();
       setState(() {
         _statusMessage = '✅ Xóa dữ liệu thành công!';
+        _progress = 1.0;
       });
     } catch (e) {
       setState(() {
         _statusMessage = '❌ Lỗi: $e';
+        _progress = 0.0;
       });
     } finally {
       setState(() {
@@ -228,53 +220,7 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
             
             // 🟢 SECTION: THÊM DỮ LIỆU
             Text(
-              '📥 ĐỒNG BỘ DỮ LIỆU (SYNC)',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.blue.shade700,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Nút Dry Run (Kiểm tra)
-            ElevatedButton.icon(
-              onPressed: _isLoading ? null : () => _syncAllData(dryRun: true),
-              icon: const Icon(Icons.preview),
-              label: const Text(
-                'Kiểm tra thay đổi (Dry Run)',
-                style: TextStyle(fontSize: 16),
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.all(16),
-                backgroundColor: Colors.blue.shade600,
-                foregroundColor: Colors.white,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Nút Sync Thực Tế
-            ElevatedButton.icon(
-              onPressed: _isLoading ? null : () => _syncAllData(dryRun: false),
-              icon: const Icon(Icons.sync),
-              label: const Text(
-                'Đồng bộ thực tế (Update/Add/Delete)',
-                style: TextStyle(fontSize: 16),
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.all(16),
-                backgroundColor: Colors.green.shade600,
-                foregroundColor: Colors.white,
-              ),
-            ),
-
-            const SizedBox(height: 24),
-            const Divider(thickness: 2),
-            const SizedBox(height: 24),
-
-            // 🟡 SECTION: THÊM DỮ LIỆU (LEGACY)
-            Text(
-              '📥 THÊM DỮ LIỆU (LEGACY)',
+              '📥 THÊM DỮ LIỆU CỨNG',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.green.shade700,
@@ -287,7 +233,7 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
               onPressed: _isLoading ? null : _seedAllData,
               icon: const Icon(Icons.upload),
               label: const Text(
-                'Thêm tất cả dữ liệu mẫu',
+                'Thêm tất cả dữ liệu cứng',
                 style: TextStyle(fontSize: 16),
               ),
               style: ElevatedButton.styleFrom(
@@ -362,20 +308,48 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
                     : Colors.red.shade50,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    _statusMessage,
-                    style: TextStyle(
-                      color: _statusMessage.contains('✅')
-                          ? Colors.green.shade700
-                          : Colors.red.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _statusMessage,
+                        style: TextStyle(
+                          color: _statusMessage.contains('✅')
+                              ? Colors.green.shade700
+                              : Colors.red.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (_isLoading && _progress > 0) ...[
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: _progress,
+                            minHeight: 8,
+                            backgroundColor: Colors.grey.shade300,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.green.shade600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${(_progress * 100).toStringAsFixed(0)}%',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
 
             // Loading indicator
-            if (_isLoading)
+            if (_isLoading && _progress == 0)
               const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Center(

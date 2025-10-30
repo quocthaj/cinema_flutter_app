@@ -90,7 +90,7 @@ class _CinemaSelectionScreenState extends State<CinemaSelectionScreen> {
       MaterialPageRoute(
         builder: (_) => BookingScreen(
           movie: widget.movie,
-          // BookingScreen sẽ tự load showtimes của movie tại theater này
+          theater: theater, // ✅ Truyền theater đã chọn
         ),
       ),
     );

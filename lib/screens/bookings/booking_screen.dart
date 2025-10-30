@@ -11,8 +11,13 @@ import '../../services/firestore_service.dart';
 
 class BookingScreen extends StatefulWidget {
   final Movie movie;
+  final Theater? theater; // ✅ Optional: có thể chọn từ cinema_selection hoặc null
 
-  const BookingScreen({super.key, required this.movie});
+  const BookingScreen({
+    super.key, 
+    required this.movie,
+    this.theater, // ✅ Theater đã chọn từ cinema_selection_screen
+  });
 
   @override
   State<BookingScreen> createState() => _BookingScreenState();
@@ -29,11 +34,42 @@ class _BookingScreenState extends State<BookingScreen> {
   Theater? selectedTheater;
   List<String> selectedSeats = [];
   
+  // ✅ Cache screen info để tránh gọi API nhiều lần
+  final Map<String, Screen> _screenCache = {};
+  
   // ✅ Removed all hardcoded data
   // ❌ final List<String> availableDates = [...];
   // ❌ final List<String> availableTimes = [...];
   // ❌ final List<String> soldSeats = [...];
   // ❌ final List<String> seatList = [...];
+
+  @override
+  void initState() {
+    super.initState();
+    _preloadScreenData();
+  }
+
+  /// Preload screen data để cache
+  Future<void> _preloadScreenData() async {
+    try {
+      final showtimes = await _firestoreService
+          .getShowtimesByMovie(widget.movie.id)
+          .first;
+      
+      final screenIds = showtimes.map((s) => s.screenId).toSet();
+      
+      for (var screenId in screenIds) {
+        final screen = await _firestoreService.getScreenById(screenId);
+        if (screen != null) {
+          _screenCache[screenId] = screen;
+        }
+      }
+      
+      if (mounted) setState(() {});
+    } catch (e) {
+      print('Error preloading screens: $e');
+    }
+  }
 
   // =======================================================
   //                 ✅ SEAT LEGEND (Updated)
@@ -140,9 +176,14 @@ class _BookingScreenState extends State<BookingScreen> {
 
   /// ✅ NEW: Build booking content with real showtimes
   Widget _buildBookingContent(List<Showtime> showtimes) {
+    // ✅ Lọc theo theater nếu đã chọn từ cinema_selection
+    final filteredByTheater = widget.theater != null
+        ? showtimes.where((s) => s.theaterId == widget.theater!.id).toList()
+        : showtimes;
+    
     // Group showtimes by date
     final Map<String, List<Showtime>> groupedByDate = {};
-    for (var showtime in showtimes) {
+    for (var showtime in filteredByTheater) {
       final date = showtime.getDate();
       groupedByDate.putIfAbsent(date, () => []).add(showtime);
     }
@@ -159,6 +200,51 @@ class _BookingScreenState extends State<BookingScreen> {
           children: [
             // --- THÔNG TIN PHIM ---
             _buildMovieInfo(),
+            
+            // --- THÔNG TIN RẠP (nếu đã chọn) ---
+            if (widget.theater != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.location_on, color: AppTheme.primaryColor, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.theater!.name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: AppTheme.textPrimaryColor,
+                            ),
+                          ),
+                          if (widget.theater!.address.isNotEmpty)
+                            Text(
+                              widget.theater!.address,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.textSecondaryColor,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            
             const Divider(color: Colors.white12, height: 30),
 
             // --- ✅ CHỌN NGÀY (từ Firestore) ---
@@ -320,48 +406,213 @@ class _BookingScreenState extends State<BookingScreen> {
       );
     }
 
+    // ✅ Nếu đã chọn theater từ cinema_selection, hiển thị đơn giản hơn
+    if (widget.theater != null) {
+      return _buildSimpleShowtimeSelection(showtimes);
+    }
+
+    // ✅ Nếu chưa chọn theater, nhóm theo theater
+    return _buildGroupedShowtimeSelection(showtimes);
+  }
+
+  /// Hiển thị suất chiếu đơn giản (đã chọn rạp)
+  Widget _buildSimpleShowtimeSelection(List<Showtime> showtimes) {
     return Wrap(
-      spacing: 12,
+      spacing: 8,
       runSpacing: 8,
       children: showtimes.map((showtime) {
         final bool isSelected = selectedShowtime?.id == showtime.id;
         final canBook = showtime.availableSeats > 0;
-
-        return ActionChip(
-          label: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                showtime.getTime(),
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              Text(
-                '${showtime.availableSeats} ghế',
-                style: TextStyle(fontSize: 10),
-              ),
-            ],
-          ),
-          onPressed: canBook
+        
+        // ✅ Dùng cache thay vì FutureBuilder
+        final screen = _screenCache[showtime.screenId];
+        final screenName = screen?.name ?? 'Đang tải...';
+        
+        return InkWell(
+          onTap: canBook
               ? () async {
                   setState(() {
                     selectedShowtime = showtime;
-                    selectedSeats = []; // Reset seats when showtime changes
+                    selectedSeats = [];
                   });
-                  // Load screen and theater data
                   await _loadShowtimeDetails(showtime);
                 }
               : null,
-          backgroundColor: isSelected
-              ? AppTheme.primaryColor
-              : (canBook ? AppTheme.fieldColor : Colors.grey[800]),
-          labelStyle: TextStyle(
-            color: canBook
-                ? AppTheme.textPrimaryColor
-                : AppTheme.textSecondaryColor,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppTheme.primaryColor
+                  : (canBook ? AppTheme.fieldColor : Colors.grey[800]),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  showtime.getTime(),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: canBook
+                        ? AppTheme.textPrimaryColor
+                        : AppTheme.textSecondaryColor,
+                  ),
+                ),
+                if (screenName.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    screenName,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: canBook
+                          ? AppTheme.textSecondaryColor
+                          : Colors.grey[600],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 2),
+                Text(
+                  '${showtime.availableSeats} ghế',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: canBook
+                        ? AppTheme.textSecondaryColor
+                        : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
           ),
-          side: BorderSide.none,
+        );
+      }).toList(),
+    );
+  }
+
+  /// Hiển thị suất chiếu nhóm theo rạp (chưa chọn rạp)
+  Widget _buildGroupedShowtimeSelection(List<Showtime> showtimes) {
+
+    // Group showtimes by theater
+    final Map<String, List<Showtime>> groupedByTheater = {};
+    for (var showtime in showtimes) {
+      groupedByTheater.putIfAbsent(showtime.theaterId, () => []).add(showtime);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: groupedByTheater.entries.map((entry) {
+        final theaterId = entry.key;
+        final theaterShowtimes = entry.value;
+        
+        return FutureBuilder<Theater?>(
+          future: _firestoreService.getTheaterById(theaterId),
+          builder: (context, snapshot) {
+            final theaterName = snapshot.data?.name ?? 'Đang tải...';
+            
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Theater name
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, color: AppTheme.primaryColor, size: 18),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          theaterName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: AppTheme.textPrimaryColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Showtimes
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: theaterShowtimes.map((showtime) {
+                      final bool isSelected = selectedShowtime?.id == showtime.id;
+                      final canBook = showtime.availableSeats > 0;
+                      
+                      // ✅ Dùng cache thay vì FutureBuilder
+                      final screen = _screenCache[showtime.screenId];
+                      final screenName = screen?.name ?? 'Đang tải...';
+                      
+                      return InkWell(
+                        onTap: canBook
+                            ? () async {
+                                setState(() {
+                                  selectedShowtime = showtime;
+                                  selectedSeats = [];
+                                });
+                                await _loadShowtimeDetails(showtime);
+                              }
+                            : null,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppTheme.primaryColor
+                                : (canBook ? AppTheme.fieldColor : Colors.grey[800]),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                showtime.getTime(),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: canBook
+                                      ? AppTheme.textPrimaryColor
+                                      : AppTheme.textSecondaryColor,
+                                ),
+                              ),
+                              if (screenName.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  screenName,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: canBook
+                                        ? AppTheme.textSecondaryColor
+                                        : Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 2),
+                              Text(
+                                '${showtime.availableSeats} ghế',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: canBook
+                                      ? AppTheme.textSecondaryColor
+                                      : Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       }).toList(),
     );
@@ -451,103 +702,127 @@ class _BookingScreenState extends State<BookingScreen> {
         ),
         const SizedBox(height: 20),
 
-        // ✅ Real seat grid from Firestore
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: screen.columns + 2, // +2 for row labels
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 10,
-            childAspectRatio: 1.0,
-          ),
-          itemCount: screen.seats.length + (screen.rows * 2), // +labels
-          itemBuilder: (context, index) {
-            final int row = index ~/ (screen.columns + 2);
-            final int col = index % (screen.columns + 2);
-
-            // Row label (first column)
-            if (col == 0) {
-              if (row < screen.rows) {
-                return Center(
-                  child: Text(
-                    String.fromCharCode('A'.codeUnitAt(0) + row),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            }
-
-            // Empty space (last column)
-            if (col == screen.columns + 1) {
-              return const SizedBox.shrink();
-            }
-
-            // Calculate actual seat index
-            final seatIndex = row * screen.columns + (col - 1);
-            if (seatIndex >= screen.seats.length) {
-              return const SizedBox.shrink();
-            }
-
-            final seat = screen.seats[seatIndex];
-            final isBooked = bookedSeats.contains(seat.id);
-            final isSelected = selectedSeats.contains(seat.id);
-
-            Color seatColor;
-            if (isBooked) {
-              seatColor = Colors.red[900]!; // Đã đặt
-            } else if (isSelected) {
-              seatColor = AppTheme.primaryColor; // Đang chọn
-            } else if (seat.type == 'vip') {
-              seatColor = Colors.orange[700]!; // VIP available
-            } else {
-              seatColor = AppTheme.fieldColor; // Standard available
-            }
-
-            return GestureDetector(
-              onTap: isBooked
-                  ? null
-                  : () {
-                      setState(() {
-                        if (isSelected) {
-                          selectedSeats.remove(seat.id);
-                        } else {
-                          selectedSeats.add(seat.id);
-                        }
-                      });
-                    },
-              child: Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: seatColor,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(8),
-                  ),
-                  border: Border.all(
-                    color: isSelected ? Colors.white : Colors.transparent,
-                    width: isSelected ? 2 : 0,
-                  ),
-                ),
-                child: Text(
-                  seat.id,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isBooked ? Colors.white54 : Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
+        // ✅ Real seat grid WITH AISLES (fixed layout)
+        _buildSeatGridWithAisles(screen, bookedSeats),
 
         const SizedBox(height: 20),
         _buildSeatLegend(),
       ],
+    );
+  }
+
+  /// ✅ FIXED: Build seat grid WITH AISLES
+  /// Seats từ Firestore đã bỏ qua aisles (A1,A2,A3,A4,A7,A8... - không có A5,A6)
+  /// Ta chỉ cần render từng seat theo vị trí column của nó
+  Widget _buildSeatGridWithAisles(Screen screen, List<String> bookedSeats) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: screen.columns + 2, // +2 for row labels
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 10,
+        childAspectRatio: 1.0,
+      ),
+      itemCount: screen.rows * (screen.columns + 2), // Total grid cells
+      itemBuilder: (context, index) {
+        final int row = index ~/ (screen.columns + 2);
+        final int col = index % (screen.columns + 2);
+
+        // Row label (first column)
+        if (col == 0) {
+          if (row < screen.rows) {
+            return Center(
+              child: Text(
+                String.fromCharCode('A'.codeUnitAt(0) + row),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }
+
+        // Empty space (last column)
+        if (col == screen.columns + 1) {
+          return const SizedBox.shrink();
+        }
+
+        // Column number (1-based, từ data)
+        final actualCol = col; // col đã là 1-12 cho IMAX, 1-10 cho Standard, 1-8 cho VIP
+
+        // Tìm seat với row + column này
+        final rowLetter = String.fromCharCode('A'.codeUnitAt(0) + row);
+        final seatId = '$rowLetter$actualCol';
+        
+        // ✅ Try to find seat - nếu không có thì là AISLE
+        final seatIndex = screen.seats.indexWhere((s) => s.id == seatId);
+        
+        if (seatIndex == -1) {
+          // Không tìm thấy seat → đây là AISLE
+          return Container(
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.arrow_downward,
+              size: 16,
+              color: AppTheme.textSecondaryColor.withOpacity(0.3),
+            ),
+          );
+        }
+
+        final seat = screen.seats[seatIndex];
+        final isBooked = bookedSeats.contains(seat.id);
+        final isSelected = selectedSeats.contains(seat.id);
+
+        Color seatColor;
+        if (isBooked) {
+          seatColor = Colors.red[900]!; // Đã đặt
+        } else if (isSelected) {
+          seatColor = AppTheme.primaryColor; // Đang chọn
+        } else if (seat.type == 'vip') {
+          seatColor = Colors.orange[700]!; // VIP available
+        } else {
+          seatColor = AppTheme.fieldColor; // Standard available
+        }
+
+        return GestureDetector(
+          onTap: isBooked
+              ? null
+              : () {
+                  setState(() {
+                    if (isSelected) {
+                      selectedSeats.remove(seat.id);
+                    } else {
+                      selectedSeats.add(seat.id);
+                    }
+                  });
+                },
+          child: Container(
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: seatColor,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(8),
+              ),
+              border: Border.all(
+                color: isSelected ? Colors.white : Colors.transparent,
+                width: isSelected ? 2 : 0,
+              ),
+            ),
+            child: Text(
+              seat.id,
+              style: TextStyle(
+                fontSize: 10,
+                color: isBooked ? Colors.white54 : Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -16,6 +16,7 @@ class Showtime {
   final double basePrice; // Giá vé cơ bản
   final double vipPrice; // Giá vé VIP
   final int availableSeats; // Số ghế còn trống
+  final int totalSeats; // ✅ NEW: Tổng số ghế
   final List<String> bookedSeats; // Danh sách ghế đã đặt (ví dụ: ["A1", "A2"])
   final String status; // active | cancelled | completed
 
@@ -29,9 +30,10 @@ class Showtime {
     required this.basePrice,
     required this.vipPrice,
     required this.availableSeats,
+    int? totalSeats, // ✅ Optional for backward compatibility
     required this.bookedSeats,
     required this.status,
-  });
+  }) : totalSeats = totalSeats ?? availableSeats; // ✅ Default to availableSeats
 
   /// Tạo Showtime từ Firestore DocumentSnapshot
   factory Showtime.fromFirestore(DocumentSnapshot doc) {
@@ -46,6 +48,7 @@ class Showtime {
       basePrice: (data['basePrice'] ?? 0).toDouble(),
       vipPrice: (data['vipPrice'] ?? 0).toDouble(),
       availableSeats: (data['availableSeats'] ?? 0).toInt(),
+      totalSeats: (data['totalSeats'] ?? data['availableSeats'] ?? 0).toInt(), // ✅ Read or fallback
       bookedSeats: List<String>.from(data['bookedSeats'] ?? []),
       status: data['status'] ?? 'active',
     );
@@ -62,6 +65,7 @@ class Showtime {
       'basePrice': basePrice,
       'vipPrice': vipPrice,
       'availableSeats': availableSeats,
+      'totalSeats': totalSeats, // ✅ Save to Firestore
       'bookedSeats': bookedSeats,
       'status': status,
     };
@@ -95,6 +99,7 @@ class Showtime {
     double? basePrice,
     double? vipPrice,
     int? availableSeats,
+    int? totalSeats,
     List<String>? bookedSeats,
     String? status,
   }) {
@@ -108,6 +113,7 @@ class Showtime {
       basePrice: basePrice ?? this.basePrice,
       vipPrice: vipPrice ?? this.vipPrice,
       availableSeats: availableSeats ?? this.availableSeats,
+      totalSeats: totalSeats ?? this.totalSeats,
       bookedSeats: bookedSeats ?? this.bookedSeats,
       status: status ?? this.status,
     );

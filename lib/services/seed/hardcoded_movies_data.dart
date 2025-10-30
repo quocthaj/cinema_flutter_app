@@ -1,9 +1,13 @@
-// lib/services/seed/movie_seed_data.dart
+// lib/services/seed/hardcoded_movies_data.dart
 
-/// Dữ liệu mẫu cho Movies
-class MovieSeedData {
-  static List<Map<String, dynamic>> get movies => [
-    // Dữ liệu mẫu cho các phim đang chiếu
+/// Dữ liệu CỨNG cho Movies (từ MovieSeedData)
+/// 
+/// ✅ 15 phim: 8 đang chiếu + 7 sắp chiếu
+/// ✅ Dữ liệu đầy đủ và chính xác
+class HardcodedMoviesData {
+  
+  /// 8 phim đang chiếu (now_showing)
+  static List<Map<String, dynamic>> get nowShowingMovies => [
     {
       "externalId": "cuc-vang-cua-ngoai",
       "title": "Cục Vàng Của Ngoại",
@@ -70,10 +74,10 @@ class MovieSeedData {
     },
     {
       "externalId": "tu-chien-tren-khong",
-      'title': 'Tử chiến trên không',
-      'genre': 'Hành động, Hồi hộp',
-      'duration': 118,
-      'rating': 9.6,
+      "title": "Tử chiến trên không",
+      "genre": "Hành động, Hồi hộp",
+      "duration": 118,
+      "rating": 9.6,
       "status": "now_showing",
       "releaseDate": "19/09/2025",
       "description": "Tử chiến trên không là phim điện ảnh hành động - kịch tính, được lấy cảm hứng từ vụ cướp máy bay có thật tại Việt Nam sau năm 1975",
@@ -132,8 +136,10 @@ class MovieSeedData {
       "language": "Tiếng Việt",
       "ageRating": "P",
     },
-    
-    // Dữ liệu mẫu cho các phim sắp chiếu
+  ];
+
+  /// 7 phim sắp chiếu (coming_soon)
+  static List<Map<String, dynamic>> get comingSoonMovies => [
     {
       "externalId": "pha-dam-sinh-nhat-me",
       "title": "Phá Đám Sinh Nhật Mẹ",
@@ -246,5 +252,11 @@ class MovieSeedData {
       "language": "Tiếng Anh (Phụ đề Tiếng Việt)",
       "ageRating": "T13"
     }
+  ];
+
+  /// Tất cả phim (15 phim)
+  static List<Map<String, dynamic>> get allMovies => [
+    ...nowShowingMovies,
+    ...comingSoonMovies,
   ];
 }
