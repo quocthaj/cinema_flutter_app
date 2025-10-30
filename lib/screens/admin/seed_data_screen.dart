@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../services/seed/hardcoded_seed_service.dart';
+import 'admin_guard.dart'; // 🔥 ADMIN: Import AdminGuard
 
 /// Màn hình Admin để quản lý seed data
-/// Chỉ dùng trong quá trình development
+/// 🔐 CHỈ ADMIN MỚI TRUY CẬP ĐƯỢC
 class SeedDataScreen extends StatefulWidget {
   const SeedDataScreen({super.key});
 
@@ -174,12 +175,19 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('🔧 Admin - Quản lý Data'),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: SingleChildScrollView(
+    // 🔥 ADMIN: Wrap toàn bộ screen với AdminGuard
+    return AdminGuard(
+      screenName: 'Quản lý dữ liệu',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('🔧 Admin - Quản lý Data'),
+          backgroundColor: Colors.deepPurple,
+          // 🔥 ADMIN: Hiển thị badge
+          actions: const [
+            AdminBadge(),
+          ],
+        ),
+        body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -412,6 +420,7 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
           ],
         ),
       ),
-    );
+    ),
+    ); // 🔥 ADMIN: Đóng AdminGuard
   }
 }

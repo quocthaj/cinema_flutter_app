@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firestore_service.dart'; // <-- Thay 'movie_app' bằng tên dự án của bạn
+import 'admin_service.dart'; // 🔥 ADMIN: Import AdminService
 
 class AuthService {
   // Khởi tạo các dịch vụ Firebase cần thiết
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirestoreService _firestoreService = FirestoreService();
+  final AdminService _adminService = AdminService(); // 🔥 ADMIN: Thêm AdminService
 
   // -------------------------------------------------------------------
   // --- QUẢN LÝ TRẠNG THÁI NGƯỜI DÙNG ---
@@ -21,11 +23,9 @@ class AuthService {
   // -------------------------------------------------------------------
 
   /// 1. Đăng ký tài khoản mới bằng Email, Mật khẩu và Tên hiển thị.
+  /// 🔥 ADMIN: Auto-promote nếu email trong whitelist
   Future<User?> signUpWithEmailAndPassword(
       String email, String password, String displayName) async {
-    // SỬA ĐỔI QUAN TRỌNG:
-    // Chúng ta bắt lỗi và 'rethrow' (ném lại) để cho RegisterScreen có thể
-    // bắt được và hiển thị thông báo lỗi chính xác.
     try {
       // Tạo người dùng trong Firebase Authentication
       final UserCredential userCredential =
@@ -36,8 +36,16 @@ class AuthService {
       final User? user = userCredential.user;
 
       if (user != null) {
+        // 🔥 ADMIN: Check whitelist để tự động promote
+        final isWhitelisted = await _adminService.isInAdminWhitelist(email);
+        final role = isWhitelisted ? 'admin' : 'user';
+
         // Sau khi tạo tài khoản thành công, tạo một bản ghi cho người dùng trong Firestore
-        await _firestoreService.createUserDocument(user, displayName);
+        await _firestoreService.createUserDocument(user, displayName, role);
+        
+        if (isWhitelisted) {
+          print('🎉 User $email được auto-promote lên admin (trong whitelist)');
+        }
       }
       return user;
     } on FirebaseAuthException catch (e) {
