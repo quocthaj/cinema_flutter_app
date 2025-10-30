@@ -11,6 +11,10 @@ class Movie {
   final String releaseDate;
   final String description;
   final String trailerUrl;
+  final String director;
+  final String cast;
+  final String language;
+  final String ageRating;
 
   Movie({
     required this.id,
@@ -23,6 +27,10 @@ class Movie {
     required this.releaseDate,
     required this.description,
     required this.trailerUrl,
+    required this.director,
+    required this.cast,
+    required this.language,
+    required this.ageRating,
   });
 
   factory Movie.fromFirestore(DocumentSnapshot doc) {
@@ -38,6 +46,10 @@ class Movie {
       rating: (data['rating'] ?? 0.0).toDouble(),
       status: data['status'] ?? 'coming_soon',
       releaseDate: data['releaseDate'] ?? 'Đang cập nhật',
+      director: data['director'] ?? 'Đang cập nhật',
+      cast: data['cast'] ?? 'Đang cập nhật',
+      language: data['language'] ?? 'Đang cập nhật',
+      ageRating: data['ageRating'] ?? 'K',
     );
   }
 
@@ -52,6 +64,10 @@ class Movie {
       'releaseDate': releaseDate,
       'description': description,
       'trailerUrl': trailerUrl,
+      'director': director,
+      'cast': cast,
+      'language': language,
+      'ageRating': ageRating,
     };
   }
 }

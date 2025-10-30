@@ -78,7 +78,7 @@ class _TheaterDetailScreenState extends State<TheaterDetailScreen> {
       MaterialPageRoute(
         builder: (_) => BookingScreen(
           movie: movie,
-          // BookingScreen sẽ tự load showtimes của movie tại theater này
+          theater: widget.theater, // ✅ FIX: Truyền theater đã chọn để giữ cố định rạp
         ),
       ),
     );
