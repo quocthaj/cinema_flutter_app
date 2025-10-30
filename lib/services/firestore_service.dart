@@ -353,7 +353,8 @@ class FirestoreService {
   // ========================================
 
   /// Tạo hoặc cập nhật user document
-  Future<void> createUserDocument(User user, [String? displayName]) async {
+  /// 🔥 ADMIN: Tạo user document với auto-promote nếu trong whitelist
+  Future<void> createUserDocument(User user, [String? displayName, String? role]) async {
     final userRef = _db.collection('users').doc(user.uid);
     final doc = await userRef.get();
 
@@ -368,6 +369,7 @@ class FirestoreService {
         'phoneNumber': null,
         'membershipLevel': 'Đồng',
         'points': 0,
+        'role': role ?? 'user', // 🔥 ADMIN: Set role (mặc định 'user')
       });
     }
   }

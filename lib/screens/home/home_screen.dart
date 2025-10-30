@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:carousel_slider_plus/carousel_slider_plus.dart';
 import '../../services/auth_service.dart';
+import '../../services/admin_service.dart'; // 🔥 THÊM: Admin service
 import '../../models/movie.dart';
 import '../widgets/movie_card.dart';
 import 'bottom_nav_bar.dart';
@@ -60,8 +61,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // void _loadUserData() { ... }
 
   Future<void> _signOut() async {
+    // Đóng drawer trước khi logout
+    Navigator.of(context).pop();
+    
     await _authService.signOut();
-    // AuthWrapper (nếu có) hoặc StreamBuilder sẽ tự xử lý
+    // StreamBuilder sẽ tự cập nhật UI (không cần setState)
   }
 
   // Sửa: Bỏ 'isLoggedIn' ra khỏi hàm này
@@ -324,20 +328,32 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
 
-          // 🆕 THÊM FLOATING ACTION BUTTON ĐỂ MỞ ADMIN SCREEN
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SeedDataScreen(),
-                ),
+          // 🔥 ADMIN: Chỉ hiển thị FAB cho admin
+          floatingActionButton: StreamBuilder<bool>(
+            stream: AdminService().isAdminStream(),
+            builder: (context, snapshot) {
+              final isAdmin = snapshot.data ?? false;
+              
+              // Chỉ hiện FAB nếu là admin
+              if (!isAdmin) {
+                return const SizedBox.shrink();
+              }
+
+              return FloatingActionButton.extended(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SeedDataScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.admin_panel_settings),
+                label: const Text('Admin'),
+                backgroundColor: Colors.deepPurple,
+                tooltip: 'Mở Admin Panel để seed dữ liệu',
               );
             },
-            icon: const Icon(Icons.admin_panel_settings),
-            label: const Text('Admin'),
-            backgroundColor: Colors.deepPurple,
-            tooltip: 'Mở Admin Panel để seed dữ liệu',
           ),
         );
       },
