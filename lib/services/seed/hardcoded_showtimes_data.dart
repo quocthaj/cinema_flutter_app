@@ -67,19 +67,66 @@ class HardcodedShowtimesData {
   };
 
   /// ============================================
-  /// TIME SLOTS (không trùng lặp)
+  /// TIME SLOTS (động theo từng ngày)
   /// ============================================
-  
-  /// Các khung giờ chiếu chuẩn
-  /// Giả định mỗi phim ~120 phút + 15 phút buffer = 2h15
-  static const timeSlots = [
-    '09:00', // Sáng sớm
+
+  /// Pool tất cả các khung giờ có thể (để xáo trộn theo ngày)
+  static const allPossibleTimeSlots = [
+    '08:30', // Sáng sớm
+    '09:00', 
+    '09:30',
+    '10:00',
+    '10:30',
+    '11:00',
     '11:30', // Trưa
+    '12:00',
+    '13:00',
+    '13:30',
     '14:00', // Chiều
+    '14:30',
+    '15:00',
+    '15:30',
+    '16:00',
     '16:30', // Chiều muộn
+    '17:00',
+    '17:30',
+    '18:00',
+    '18:30',
     '19:00', // Tối (giờ vàng) ⭐
+    '19:30',
+    '20:00',
+    '20:30',
+    '21:00',
     '21:30', // Tối muộn
+    '22:00',
+    '22:30',
   ];
+
+  /// Lấy time slots cho một ngày cụ thể (số lượng và giờ khác nhau mỗi ngày)
+  /// Số suất: 3-7 suất/ngày (tùy theo ngày)
+  static List<String> getTimeSlotsForDay(int dayIndex) {
+    // Xác định số suất chiếu cho ngày này (3-7 suất, dao động theo dayIndex)
+    final slotCounts = [6, 4, 5, 3, 7, 5, 4]; // Pattern cho 7 ngày
+    final numSlots = slotCounts[dayIndex % slotCounts.length];
+    
+    // Tạo list indices và xáo trộn theo dayIndex
+    final indices = List.generate(allPossibleTimeSlots.length, (i) => i);
+    
+    // Simple shuffle based on dayIndex (deterministic)
+    for (var i = 0; i < dayIndex % 10; i++) {
+      final temp = indices[i % indices.length];
+      indices[i % indices.length] = indices[(i + dayIndex) % indices.length];
+      indices[(i + dayIndex) % indices.length] = temp;
+    }
+    
+    // Lấy numSlots slots, sắp xếp theo thời gian
+    final selectedIndices = indices.take(numSlots).toList()..sort();
+    final selectedSlots = selectedIndices
+        .map((i) => allPossibleTimeSlots[i])
+        .toList();
+    
+    return selectedSlots;
+  }
 
   /// ============================================
   /// DYNAMIC PRICING CALCULATOR
@@ -183,6 +230,7 @@ class HardcodedShowtimesData {
   /// ✅ NEW: Helper để tạo showtimes cho 1 rạp với nhiều phim
   /// STRATEGY: Mỗi phim xuất hiện ở NHIỀU PHÒNG KHÁC NHAU, mỗi giờ 1 phòng khác nhau
   /// Ví dụ: Tron Ares → 09:00 Phòng 1, 11:30 Phòng 3, 14:00 Phòng 5, 16:30 Phòng 2, 19:00 Phòng 4...
+  /// NOTE: Time slots sẽ được thay thế bởi getTimeSlotsForDay() khi seed
   static List<Map<String, dynamic>> generateTheaterShowtimes({
     required String theaterExternalId,
     required List<String> movieIds,
@@ -191,6 +239,9 @@ class HardcodedShowtimesData {
     required int imaxScreenCount,      // Số phòng IMAX
   }) {
     final List<Map<String, dynamic>> showtimes = [];
+    
+    // Time slots mặc định cho template (7 slots để hỗ trợ max 7 suất/ngày)
+    const baseTimeSlots = ['09:00', '11:30', '14:00', '16:30', '19:00', '21:30', '22:30'];
     
     // Tạo danh sách các phòng với loại
     final List<Map<String, dynamic>> screens = [];
@@ -214,7 +265,7 @@ class HardcodedShowtimesData {
     int timeIndex = 0;
     
     // Với mỗi khung giờ chiếu
-    for (var time in timeSlots) {
+    for (var time in baseTimeSlots) {
       // Xáo trộn thứ tự phim cho mỗi giờ chiếu khác nhau
       // Offset phim theo giờ chiếu để tạo sự đa dạng
       int offsetMovieIndex = movieIndex + timeIndex;

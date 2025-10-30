@@ -108,6 +108,35 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     );
   }
 
+  // 📋 Widget hiển thị thông tin phim (label + value)
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 90,
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white60,
+                  fontWeight: FontWeight.w500,
+                ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                  height: 1.4,
+                ),
+          ),
+        ),
+      ],
+    );
+  }
+
   // 🎟️ Nút đặt vé (Giữ nguyên logic của bạn, đã đúng)
   Widget _buildBookingButton(BuildContext context) {
     return Container(
@@ -251,6 +280,24 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                         .bodyMedium
                         ?.copyWith(height: 1.5),
                   ),
+                  const SizedBox(height: 30),
+                  
+                  // 📋 Thông tin chi tiết phim
+                  Text(
+                    "Thông tin",
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const Divider(color: Colors.white12, height: 15),
+                  const SizedBox(height: 10),
+                  _buildInfoRow("Đạo diễn", movie.director),
+                  const SizedBox(height: 12),
+                  _buildInfoRow("Diễn viên", movie.cast),
+                  const SizedBox(height: 12),
+                  _buildInfoRow("Thể loại", movie.genre),
+                  const SizedBox(height: 12),
+                  _buildInfoRow("Ngôn ngữ", movie.language),
+                  const SizedBox(height: 12),
+                  _buildInfoRow("Độ tuổi", movie.ageRating),
                   const SizedBox(height: 30),
                   
                   // 🎬 Trailer Section (nút mở link bên ngoài)

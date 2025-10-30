@@ -232,11 +232,14 @@ class HardcodedSeedService {
   }
 
   /// 🔄 Xáo trộn showtimes theo ngày để tạo sự đa dạng
-  /// Mỗi ngày sẽ có pattern phim khác nhau trong cùng 1 rạp
+  /// Mỗi ngày sẽ có pattern phim VÀ GIỜ CHIẾU khác nhau (3-7 suất/ngày)
   List<Map<String, dynamic>> _rotateShowtimesByDay(
     List<Map<String, dynamic>> showtimes,
     int dayIndex,
   ) {
+    // Lấy time slots cho ngày này (3-7 slots khác nhau mỗi ngày)
+    final timeSlotsForDay = HardcodedShowtimesData.getTimeSlotsForDay(dayIndex);
+    
     // Nhóm showtimes theo theater + screen
     final Map<String, List<Map<String, dynamic>>> grouped = {};
     
@@ -246,7 +249,7 @@ class HardcodedSeedService {
       grouped[key]!.add(showtime);
     }
     
-    // Xáo trộn movies trong mỗi screen theo dayIndex
+    // Xáo trộn movies VÀ times trong mỗi screen theo dayIndex
     final List<Map<String, dynamic>> rotated = [];
     
     for (var entry in grouped.entries) {
@@ -261,20 +264,19 @@ class HardcodedSeedService {
       // Rotate movies theo dayIndex
       final rotatedMovieIds = _rotateList(movieIds, dayIndex);
       
-      // Tạo map từ movie cũ -> movie mới
-      final movieMapping = <String, String>{};
-      for (var i = 0; i < movieIds.length; i++) {
-        movieMapping[movieIds[i]] = rotatedMovieIds[i];
-      }
+      // ✅ Chỉ lấy số lượng showtimes = số time slots của ngày
+      final numSlotsToday = timeSlotsForDay.length;
+      final selectedShowtimes = showtimesInScreen.take(numSlotsToday).toList();
       
-      // Apply mapping vào showtimes
-      for (var showtime in showtimesInScreen) {
-        final oldMovieId = showtime['movieExternalId'] as String;
-        final newMovieId = movieMapping[oldMovieId] ?? oldMovieId;
+      // Apply rotated movies và new time slots
+      for (var i = 0; i < selectedShowtimes.length; i++) {
+        final showtime = selectedShowtimes[i];
+        final movieId = rotatedMovieIds[i % rotatedMovieIds.length];
         
         rotated.add({
           ...showtime,
-          'movieExternalId': newMovieId,
+          'movieExternalId': movieId,
+          'time': timeSlotsForDay[i],
         });
       }
     }

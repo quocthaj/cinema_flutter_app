@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../models/movie.dart';
 import '../../models/theater_model.dart';
-import '../../models/showtime.dart';
 import '../../services/firestore_service.dart';
 import '../bookings/booking_screen.dart'; // 🆕 Direct to BookingScreen
 
@@ -22,9 +21,6 @@ class CinemaSelectionScreen extends StatefulWidget {
 
 class _CinemaSelectionScreenState extends State<CinemaSelectionScreen> {
   final _firestoreService = FirestoreService();
-  
-  // Map: theaterId -> List<Showtime>
-  Map<String, List<Showtime>> _showtimesByTheater = {};
   
   // Map: theaterId -> Theater
   Map<String, Theater> _theaters = {};
@@ -47,18 +43,12 @@ class _CinemaSelectionScreenState extends State<CinemaSelectionScreen> {
 
       if (!mounted) return;
 
-      // 2. Nhóm showtimes theo theaterId
-      final Map<String, List<Showtime>> grouped = {};
-      for (var showtime in showtimes) {
-        if (!grouped.containsKey(showtime.theaterId)) {
-          grouped[showtime.theaterId] = [];
-        }
-        grouped[showtime.theaterId]!.add(showtime);
-      }
+      // 2. Lấy danh sách unique theaterIds
+      final theaterIds = showtimes.map((s) => s.theaterId).toSet();
 
       // 3. Lấy thông tin theater cho mỗi theaterId
       final Map<String, Theater> theaterMap = {};
-      for (var theaterId in grouped.keys) {
+      for (var theaterId in theaterIds) {
         final theater = await _firestoreService.getTheaterById(theaterId);
         if (theater != null) {
           theaterMap[theaterId] = theater;
@@ -68,7 +58,6 @@ class _CinemaSelectionScreenState extends State<CinemaSelectionScreen> {
       if (!mounted) return;
 
       setState(() {
-        _showtimesByTheater = grouped;
         _theaters = theaterMap;
         _isLoading = false;
       });
@@ -204,7 +193,6 @@ class _CinemaSelectionScreenState extends State<CinemaSelectionScreen> {
                         itemBuilder: (context, index) {
                           final theaterId = _theaters.keys.elementAt(index);
                           final theater = _theaters[theaterId]!;
-                          final showtimeCount = _showtimesByTheater[theaterId]?.length ?? 0;
 
                           return Card(
                             elevation: 2,
@@ -267,26 +255,6 @@ class _CinemaSelectionScreenState extends State<CinemaSelectionScreen> {
                                           ),
                                         ),
                                       ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    // Showtime Count
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        '$showtimeCount suất chiếu',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppTheme.primaryColor,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
                                     ),
                                   ],
                                 ),
