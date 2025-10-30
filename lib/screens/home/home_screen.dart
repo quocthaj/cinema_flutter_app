@@ -60,8 +60,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // void _loadUserData() { ... }
 
   Future<void> _signOut() async {
+    // Đóng drawer trước khi logout
+    Navigator.of(context).pop();
+    
     await _authService.signOut();
-    // AuthWrapper (nếu có) hoặc StreamBuilder sẽ tự xử lý
+    // StreamBuilder sẽ tự cập nhật UI (không cần setState)
   }
 
   // Sửa: Bỏ 'isLoggedIn' ra khỏi hàm này

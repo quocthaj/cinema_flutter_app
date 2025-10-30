@@ -56,11 +56,14 @@ class _LoginScreenState extends State<LoginScreen> {
             const SnackBar(
               content: Text('Đăng nhập thành công!'),
               backgroundColor: Colors.green,
+              duration: Duration(seconds: 1),
             ),
           );
-          // KHÔNG CẦN Navigator.pushReplacement ở đây.
-          // AuthWrapper trong main.dart sẽ tự động phát hiện
-          // sự thay đổi trạng thái và điều hướng đến HomeScreen.
+          
+          // Quay về HomeScreen
+          if (mounted) {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
         } else {
           // Đăng nhập thất bại
           ScaffoldMessenger.of(context).showSnackBar(
