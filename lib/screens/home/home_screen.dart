@@ -1,9 +1,10 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:carousel_slider_plus/carousel_slider_plus.dart';
 import '../../services/auth_service.dart';
 import '../../services/admin_service.dart'; // 🔥 THÊM: Admin service
 import '../../models/movie.dart';
+import '../../models/news_model.dart';
 import '../widgets/movie_card.dart';
+import '../widgets/banner_carousel.dart';
 import 'bottom_nav_bar.dart';
 import 'custom_drawer.dart';
 // --- 1. SỬA IMPORT NÀY ---
@@ -34,12 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // Banner carousel state
   // Use ValueNotifier to avoid rebuilding whole screen when banner changes
   final ValueNotifier<int> _currentBanner = ValueNotifier<int>(0);
-
-  final List<String> _banners = [
-    'lib/images/banner1.jpg',
-    'lib/images/banner2.jpg',
-    'lib/images/banner3.jpg',
-  ];
 
   // <-- Thêm: cache stream để tránh re-subscribe khi setState thay đổi banner/index
   late final Stream<List<Movie>> _moviesStream;
@@ -94,22 +89,41 @@ class _HomeScreenState extends State<HomeScreen> {
         // Lấy thông tin user từ snapshot
         final User? user = authSnapshot.data;
         final bool isLoggedIn = user != null;
-        final String userName = user?.displayName ?? 'Khách';
+        
         final String userEmail = user?.email ?? 'Vui lòng đăng nhập';
 
-        // Trả về Scaffold chính
-        return Scaffold(
-          drawer: const CustomDrawer(),
+        // Lấy userData một lần bằng FutureBuilder thay vì nested StreamBuilder
+        return FutureBuilder<Map<String, dynamic>?>(
+          future: isLoggedIn 
+            ? _firestoreService.getUserStream(user.uid).first
+            : Future.value(null),
+          builder: (context, userSnapshot) {
+            // Lấy dữ liệu từ Firestore
+            final userData = userSnapshot.data;
+            final String? role = userData?['role'];
+            final String? membershipLevel = userData?['membershipLevel'];
+            final String? avatarUrl = userData?['photoUrl'] ?? user?.photoURL;
+            
+            // Lấy displayName từ Firestore, fallback về Firebase Auth, cuối cùng là email
+            final String userName = userData?['displayName'] ?? 
+                user?.displayName ?? 
+                (user?.email?.split('@').first ?? 'Thành viên');
 
-          // --- 3. CẬP NHẬT ENDDRAWER ---
-          endDrawer: ProfileDrawerDynamic(
-            userName: userName,
-            userEmail: userEmail,
-            onLogout: _signOut,
-            isLoggedIn: isLoggedIn, // <-- ĐÃ THÊM BIẾN NÀY
-          ),
+            return Scaffold(
+              drawer: const CustomDrawer(),
 
-          appBar: AppBar(
+              // --- 3. CẬP NHẬT ENDDRAWER ---
+              endDrawer: ProfileDrawerDynamic(
+                userName: userName,
+                userEmail: userEmail,
+                avatarUrl: avatarUrl,
+                role: role,
+                membershipLevel: membershipLevel,
+                onLogout: _signOut,
+                isLoggedIn: isLoggedIn,
+              ),
+
+              appBar: AppBar(
             centerTitle: true,
             actions: [
               Builder(
@@ -167,59 +181,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 🔥 Banner Auto Slide (Giữ nguyên)
-                    Stack(
-                      alignment: Alignment.bottomCenter,
-                      children: [
-                        CarouselSlider(
-                          options: CarouselOptions(
-                            autoPlay: true,
+                    // 🔥 Banner Auto Slide - Updated to use news from Firestore
+                    StreamBuilder<List<NewsModel>>(
+                      stream: _firestoreService.getNewsStream(),
+                      builder: (context, newsSnapshot) {
+                        if (newsSnapshot.hasData && newsSnapshot.data!.isNotEmpty) {
+                          // Use news items for banner
+                          return BannerCarousel(newsItems: newsSnapshot.data!);
+                        } else {
+                          // Loading or no data
+                          return Container(
                             height: 200,
-                            enlargeCenterPage: true,
-                            viewportFraction: 0.9,
-                            autoPlayInterval: const Duration(seconds: 4),
-                            // update notifier only (no setState) to avoid rebuilding whole screen
-                            onPageChanged: (index, _) {
-                              _currentBanner.value = index;
-                            },
-                          ),
-                          items: _banners.map((img) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                img,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
+                            color: AppTheme.cardColor,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: AppTheme.primaryColor,
                               ),
-                            );
-                          }).toList(),
-                        ),
-                        // Dots: listen only to _currentBanner (no parent rebuild)
-                        ValueListenableBuilder<int>(
-                          valueListenable: _currentBanner,
-                          builder: (context, current, _) {
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: _banners.asMap().entries.map((entry) {
-                                final isActive = current == entry.key;
-                                return AnimatedContainer(
-                                  duration: const Duration(milliseconds: 300),
-                                  width: isActive ? 10 : 6,
-                                  height: 6,
-                                  margin: const EdgeInsets.symmetric(
-                                      vertical: 8, horizontal: 3),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: isActive
-                                        ? AppTheme.primaryColor
-                                        : Colors.white38,
-                                  ),
-                                );
-                              }).toList(),
-                            );
-                          },
-                        ),
-                      ],
+                            ),
+                          );
+                        }
+                      },
                     ),
 
                     const SizedBox(height: 20),
@@ -355,6 +336,8 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
+        );
+          },
         );
       },
     );

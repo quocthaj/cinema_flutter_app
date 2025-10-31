@@ -45,5 +45,12 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- 🔥 THÊM: Permissions cho camera và photo library -->
+	<key>NSCameraUsageDescription</key>
+	<string>Cho phép sử dụng camera để chụp ảnh đại diện</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Cho phép truy cập thư viện ảnh để chọn ảnh đại diện</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Cho phép lưu ảnh vào thư viện</string>
 </dict>
 </plist>

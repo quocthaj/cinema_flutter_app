@@ -7,6 +7,7 @@ import 'hardcoded_screens_data.dart';
 import 'hardcoded_showtimes_data.dart';
 import 'hardcoded_showtimes_hcm_data.dart';
 import 'hardcoded_showtimes_danang_data.dart';
+import 'hardcoded_news_data.dart';
 
 /// Service seed data với logic SYNC thông minh
 /// 
@@ -53,6 +54,14 @@ class SyncSeedService {
       report.movies = movieResult;
       print('   ✅ ${movieResult.summary}\n');
       onProgress?.call(0.25, 'Đã sync ${movieResult.total} movies');
+      
+  // 1.5 Sync news/promotions
+  onProgress?.call(0.26, 'Đang sync news/promotions...');
+  print('📰 1.5. Sync News/Promotions...');
+  final newsResult = await syncNews();
+  report.news = newsResult;
+  print('   ✅ ${newsResult.summary}\n');
+  onProgress?.call(0.30, 'Đã sync ${newsResult.total} news');
       
       // 2. Sync theaters
       onProgress?.call(0.25, 'Đang sync theaters...');
@@ -147,6 +156,58 @@ class SyncSeedService {
       result.error = e.toString();
     }
     
+    return result;
+  }
+
+  /// ✅ Sync news & promotions from hardcoded data
+  Future<SyncResult> syncNews() async {
+    final result = SyncResult(collectionName: 'news');
+
+    try {
+      // Lấy tất cả news hiện có
+      final snapshot = await _db.collection('news').get();
+      final existing = <String, String>{}; // externalId -> firestoreId
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final externalId = data['externalId'] as String?;
+        if (externalId != null) existing[externalId] = doc.id;
+      }
+
+      for (var news in HardcodedNewsData.getAllNews()) {
+        final externalId = news.id;
+        final payload = {
+          ...news.toMap(),
+          'externalId': externalId,
+        };
+
+        if (existing.containsKey(externalId)) {
+          final firestoreId = existing[externalId]!;
+          final needsUpdate = await _needsUpdate('news', firestoreId, payload);
+          if (needsUpdate) {
+            await _db.collection('news').doc(firestoreId).update({
+              ...payload,
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+            result.updated++;
+            print('   📝 Updated news: ${news.title}');
+          } else {
+            result.unchanged++;
+          }
+        } else {
+          await _db.collection('news').add({
+            ...payload,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+          result.inserted++;
+          print('   ➕ Inserted news: ${news.title}');
+        }
+      }
+    } catch (e) {
+      print('❌ Lỗi sync news: $e');
+      result.error = e.toString();
+    }
+
     return result;
   }
   
@@ -540,6 +601,7 @@ class SyncReport {
   SyncResult? theaters;
   SyncResult? screens;
   SyncResult? showtimes;
+  SyncResult? news;
   
   void printSummary() {
     print('='*60);
@@ -549,6 +611,7 @@ class SyncReport {
     print('🏢 Theaters:  ${theaters?.summary ?? "Chưa sync"}');
     print('🪑 Screens:   ${screens?.summary ?? "Chưa sync"}');
     print('⏰ Showtimes: ${showtimes?.summary ?? "Chưa sync"}');
+    print('📰 News:      ${news?.summary ?? "Chưa sync"}');
     print('='*60);
   }
 }

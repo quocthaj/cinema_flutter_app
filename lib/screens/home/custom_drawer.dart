@@ -3,9 +3,11 @@ import '../../services/admin_service.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../admin/seed_data_screen.dart';
 import '../admin/user_management_screen.dart';
+import '../movie/movie_screen.dart';
 import '../reward/reward_screen.dart';
 import '../news/news_and_promotions_screen.dart';
 import 'contact/contact_screen.dart';
+import '../theater/theaters_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
@@ -93,19 +95,40 @@ class CustomDrawer extends StatelessWidget {
                     context,
                     icon: Icons.confirmation_number_rounded,
                     title: "Mua vé",
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TheatersScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _buildMenuItem(
                     context,
                     icon: Icons.local_movies_rounded,
                     title: "Phim",
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MovieScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _buildMenuItem(
                     context,
                     icon: Icons.theaters_rounded,
                     title: "Rạp",
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TheatersScreen(),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 15),
                   _buildDivider(),

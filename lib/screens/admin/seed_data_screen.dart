@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/seed/hardcoded_seed_service.dart';
+import '../../services/seed/sync_seed_service.dart';
 import 'admin_guard.dart'; // 🔥 ADMIN: Import AdminGuard
 
 /// Màn hình Admin để quản lý seed data
@@ -13,6 +14,7 @@ class SeedDataScreen extends StatefulWidget {
 
 class _SeedDataScreenState extends State<SeedDataScreen> {
   final _seedService = HardcodedSeedService();
+  final _syncService = SyncSeedService();
   bool _isLoading = false;
   String _statusMessage = '';
   double _progress = 0.0;
@@ -43,6 +45,75 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
             '  🪑 44 phòng chiếu (11 × 4)\n'
             '  ⏰ ~1,848 suất chiếu (264/ngày × 7 ngày)\n'
             '  ✅ KHÔNG TRÙNG GIỜ - Mỗi phòng mỗi giờ chỉ 1 suất';
+      });
+    } catch (e) {
+      setState(() {
+        _statusMessage = '❌ Lỗi: $e';
+        _progress = 0.0;
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Đồng bộ TẤT CẢ dữ liệu (SyncSeedService - Recommended)
+  Future<void> _syncAllData() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage = 'Đang đồng bộ tất cả dữ liệu...';
+      _progress = 0.0;
+    });
+
+    // Set up progress callback
+    _syncService.onProgress = (progress, message) {
+      setState(() {
+        _progress = progress;
+        _statusMessage = message;
+      });
+    };
+
+    try {
+      final report = await _syncService.syncAll();
+
+      setState(() {
+        _progress = 1.0;
+        _statusMessage = '✅ Đồng bộ hoàn tất!\n\n'
+            '📰 Tin tức: +${report.news?.inserted ?? 0} | ~${report.news?.updated ?? 0}\n'
+            '🎭 Rạp: +${report.theaters?.inserted ?? 0} | ~${report.theaters?.updated ?? 0}\n'
+            '📽️ Phim: +${report.movies?.inserted ?? 0} | ~${report.movies?.updated ?? 0}\n'
+            '🪑 Phòng: +${report.screens?.inserted ?? 0} | ~${report.screens?.updated ?? 0}\n'
+            '⏰ Suất chiếu: +${report.showtimes?.inserted ?? 0} | ~${report.showtimes?.updated ?? 0}';
+      });
+    } catch (e) {
+      setState(() {
+        _statusMessage = '❌ Lỗi: $e';
+        _progress = 0.0;
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Đồng bộ chỉ TIN TỨC
+  Future<void> _syncNewsOnly() async {
+    setState(() {
+      _isLoading = true;
+      _statusMessage = 'Đang đồng bộ tin tức...';
+      _progress = 0.0;
+    });
+
+    try {
+      final result = await _syncService.syncNews();
+      setState(() {
+        _progress = 1.0;
+        _statusMessage = '✅ Đồng bộ tin tức thành công!\n'
+            '  ➕ Đã thêm: ${result.inserted}\n'
+            '  📝 Đã cập nhật: ${result.updated}\n'
+            '  ✓ Không đổi: ${result.unchanged}';
       });
     } catch (e) {
       setState(() {
@@ -226,9 +297,55 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
             
             const SizedBox(height: 24),
             
-            // 🟢 SECTION: THÊM DỮ LIỆU
+            // 🟢 SECTION: ĐỒNG BỘ DỮ LIỆU (RECOMMENDED)
             Text(
-              '📥 THÊM DỮ LIỆU CỨNG',
+              '🔄 ĐỒNG BỘ DỮ LIỆU (Khuyến nghị)',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade700,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Nút Sync All Data
+            ElevatedButton.icon(
+              onPressed: _isLoading ? null : _syncAllData,
+              icon: const Icon(Icons.sync),
+              label: const Text(
+                'Đồng bộ TẤT CẢ dữ liệu',
+                style: TextStyle(fontSize: 16),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(16),
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Nút Sync News Only
+            OutlinedButton.icon(
+              onPressed: _isLoading ? null : _syncNewsOnly,
+              icon: const Icon(Icons.newspaper),
+              label: const Text(
+                '📰 Đồng bộ riêng TIN TỨC',
+                style: TextStyle(fontSize: 15),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.all(14),
+                foregroundColor: Colors.blue.shade700,
+                side: BorderSide(color: Colors.blue.shade700, width: 2),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+            const Divider(thickness: 2),
+            const SizedBox(height: 24),
+            
+            // 🟢 SECTION: THÊM DỮ LIỆU (LEGACY)
+            Text(
+              '📥 THÊM DỮ LIỆU (Legacy)',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.green.shade700,
@@ -297,6 +414,7 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
               spacing: 8,
               runSpacing: 8,
               children: [
+                _buildClearCollectionButton('news', 'Tin tức', Icons.newspaper),
                 _buildClearCollectionButton('movies', 'Phim', Icons.movie),
                 _buildClearCollectionButton('theaters', 'Rạp', Icons.theater_comedy),
                 _buildClearCollectionButton('screens', 'Phòng', Icons.meeting_room),
@@ -390,13 +508,13 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      '� ĐỒNG BỘ DỮ LIỆU (Recommended):\n'
-                      '• "Kiểm tra thay đổi": Xem những gì sẽ thay đổi mà không thực thi\n'
-                      '• "Đồng bộ thực tế": Update/Add/Delete dữ liệu theo seed files\n'
-                      '  - Update: Cập nhật bản ghi đã có nếu có thay đổi\n'
-                      '  - Add: Thêm mới bản ghi còn thiếu\n'
-                      '  - Delete: Xóa bản ghi không còn trong seed\n\n'
-                      '�📥 THÊM DỮ LIỆU (Legacy):\n'
+                      '🔄 ĐỒNG BỘ DỮ LIỆU (Recommended):\n'
+                      '• "Đồng bộ TẤT CẢ": Sync toàn bộ (News + Rạp + Phim + Suất chiếu)\n'
+                      '  - Tự động thêm/cập nhật dữ liệu mới từ seed\n'
+                      '  - KHÔNG XÓA booking/payment đã có\n'
+                      '  - An toàn chạy nhiều lần\n'
+                      '• "Đồng bộ riêng TIN TỨC": Chỉ sync 15 tin tức/khuyến mãi\n\n'
+                      '📥 THÊM DỮ LIỆU (Legacy):\n'
                       '• Nhấn "Thêm tất cả dữ liệu mẫu" để tạo:\n'
                       '  - 15 phim mẫu\n'
                       '  - 18 rạp chiếu\n'
@@ -406,8 +524,9 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
                       '• "XÓA TẤT CẢ": Xóa toàn bộ data (bookings, payments, showtimes, screens, theaters, movies)\n'
                       '• Xóa từng collection: Chỉ xóa collection cụ thể\n\n'
                       '💡 TIPS:\n'
+                      '• LẦN ĐẦU: Dùng "Đồng bộ TẤT CẢ" để tạo đầy đủ dữ liệu\n'
+                      '• Nếu muốn thêm tin mới: Dùng "Đồng bộ riêng TIN TỨC"\n'
                       '• Nếu app bị lag/đen → Xóa bookings + payments trước\n'
-                      '• Nếu muốn làm lại hoàn toàn → Xóa tất cả rồi seed lại\n'
                       '• Check Firebase Console để verify',
                       style: TextStyle(fontSize: 12, color: Colors.black87),
                     ),

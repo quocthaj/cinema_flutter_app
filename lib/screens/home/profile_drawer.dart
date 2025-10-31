@@ -3,6 +3,10 @@ import '../reward/reward_screen.dart';
 import '../members/watched_movies_screen.dart';
 import '../members/my_tickets_screen.dart';
 import '../members/member_info_screen.dart';
+import '../../services/admin_service.dart';
+import '../../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // --- THÊM IMPORT CHO TRANG LOGIN ---
 // (Hãy sửa lại đường dẫn này cho đúng với dự án của bạn)
@@ -12,6 +16,9 @@ import '../auth/login_screen.dart';
 class ProfileDrawerDynamic extends StatelessWidget {
   final String userName;
   final String userEmail;
+  final String? avatarUrl;
+  final String? role; // 'admin' hoặc 'user'
+  final String? membershipLevel; // 'Đồng', 'Bạc', 'Vàng'
   final VoidCallback onLogout;
   // --- THÊM BIẾN NÀY ---
   final bool isLoggedIn; // Dùng để kiểm tra trạng thái đăng nhập
@@ -20,6 +27,9 @@ class ProfileDrawerDynamic extends StatelessWidget {
     super.key,
     required this.userName,
     required this.userEmail,
+    this.avatarUrl,
+    this.role,
+    this.membershipLevel,
     required this.onLogout,
     // --- THÊM BIẾN NÀY VÀO CONSTRUCTOR ---
     required this.isLoggedIn,
@@ -85,56 +95,23 @@ class ProfileDrawerDynamic extends StatelessWidget {
                             ),
                           ],
                         ),
-                        child: const CircleAvatar(
+                        child: CircleAvatar(
                           radius: 45,
-                          backgroundImage:
-                              AssetImage("assets/images/avatar.png"),
+                          backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
+                              ? NetworkImage(avatarUrl!)
+                              : const AssetImage("assets/images/avatar.png") as ImageProvider,
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        userName, // Dùng tên được truyền vào
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                      ),
+                      
+                      // Role Badge (Admin hoặc Khách hàng)
+                      _buildRoleBadge(),
+                      
                       const SizedBox(height: 8),
-                      // Member badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 6),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.white.withOpacity(0.15),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.stars_rounded,
-                              size: 16,
-                              color: Colors.amber[300],
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              userEmail.contains('Normal')
-                                  ? 'Normal Member'
-                                  : 'VIP Member',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      
+                      // User Name với hạng thành viên
+                      _buildUserNameWithTier(),
+                      
                       const SizedBox(height: 6),
                       Text(
                         userEmail, // Dùng email được truyền vào
@@ -408,6 +385,125 @@ class ProfileDrawerDynamic extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+  
+  /// Hiển thị badge Role: "Admin" hoặc "Khách hàng"
+  Widget _buildRoleBadge() {
+    final bool isAdmin = role?.toLowerCase() == 'admin';
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: isAdmin 
+            ? [const Color(0xFFFFD700), const Color(0xFFFFA500)] // Gold gradient cho Admin
+            : [Colors.white.withOpacity(0.15), Colors.white.withOpacity(0.1)], // Subtle cho User
+        ),
+        border: Border.all(
+          color: isAdmin ? Colors.amber.withOpacity(0.5) : Colors.white.withOpacity(0.2),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isAdmin ? Icons.admin_panel_settings : Icons.person_outline,
+            size: 16,
+            color: isAdmin ? Colors.black87 : Colors.white,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isAdmin ? 'ADMIN' : 'Thành viên',
+            style: TextStyle(
+              color: isAdmin ? Colors.black87 : Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  /// Hiển thị tên user + hạng thành viên (với màu sắc)
+  Widget _buildUserNameWithTier() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Full name
+        Text(
+          userName,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        
+        // Hạng thành viên (chỉ hiện nếu không phải admin)
+        if (role?.toLowerCase() != 'admin' && membershipLevel != null) ...[
+          const SizedBox(width: 8),
+          _buildMembershipTierBadge(membershipLevel!),
+        ],
+      ],
+    );
+  }
+  
+  /// Badge hạng thành viên với màu sắc: Đồng/Bạc/Vàng
+  Widget _buildMembershipTierBadge(String tier) {
+    Color tierColor;
+    IconData tierIcon;
+    
+    switch (tier.toLowerCase()) {
+      case 'vàng':
+        tierColor = const Color(0xFFFFD700); // Gold
+        tierIcon = Icons.workspace_premium;
+        break;
+      case 'bạc':
+        tierColor = const Color(0xFFC0C0C0); // Silver
+        tierIcon = Icons.military_tech;
+        break;
+      case 'đồng':
+      default:
+        tierColor = const Color(0xFFCD7F32); // Bronze
+        tierIcon = Icons.emoji_events;
+        break;
+    }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: tierColor.withOpacity(0.2),
+        border: Border.all(
+          color: tierColor,
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            tierIcon,
+            size: 14,
+            color: tierColor,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            tier,
+            style: TextStyle(
+              color: tierColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
       ),
     );
   }
