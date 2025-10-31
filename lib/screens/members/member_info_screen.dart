@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart'; // <-- THÊM
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart'; // 🔥 THÊM: ImageSource
 import '/services/auth_service.dart'; // <-- Sửa đường dẫn
 import '/services/firestore_service.dart'; // <-- THÊM
+import '/services/avatar_service.dart'; // 🔥 THÊM: Avatar service
 import '/models/user_model.dart'; // <-- THÊM
 import '../../config/theme.dart';
 
@@ -15,6 +18,7 @@ class MemberInfoScreen extends StatefulWidget {
 class _MemberInfoScreenState extends State<MemberInfoScreen> {
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
+  final AvatarService _avatarService = AvatarService(); // 🔥 THÊM
   UserModel? _userModel;
   User? _authUser;
   bool _isLoading = true;
@@ -146,6 +150,207 @@ class _MemberInfoScreenState extends State<MemberInfoScreen> {
     }
   }
 
+  // 🔥 THÊM: Show options để chọn ảnh hoặc xóa avatar
+  Future<void> _showAvatarOptions() async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Ảnh đại diện',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+
+                // Chọn từ gallery
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.photo_library, color: Colors.blue),
+                  ),
+                  title: const Text('Chọn từ thư viện'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAndUploadImage(ImageSource.gallery);
+                  },
+                ),
+
+                // Chụp ảnh
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.camera_alt, color: Colors.green),
+                  ),
+                  title: const Text('Chụp ảnh mới'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickAndUploadImage(ImageSource.camera);
+                  },
+                ),
+
+                // Xóa avatar (chỉ hiện nếu có avatar)
+                if (_authUser?.photoURL != null)
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.delete, color: Colors.red),
+                    ),
+                    title: const Text('Xóa ảnh đại diện'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _deleteAvatar();
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // 🔥 THÊM: Chọn và upload ảnh
+  Future<void> _pickAndUploadImage(ImageSource source) async {
+    try {
+      setState(() => _isLoading = true);
+
+      // Chọn ảnh
+      File? imageFile;
+      if (source == ImageSource.gallery) {
+        imageFile = await _avatarService.pickImageFromGallery();
+      } else {
+        imageFile = await _avatarService.pickImageFromCamera();
+      }
+
+      if (imageFile == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Crop ảnh
+      final croppedFile = await _avatarService.cropImage(imageFile);
+      if (croppedFile == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Upload lên Firebase
+      final downloadUrl = await _avatarService.uploadAvatar(croppedFile);
+      
+      if (downloadUrl != null && mounted) {
+        // Reload user data để cập nhật UI
+        await _loadUserData();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Cập nhật ảnh đại diện thành công!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error uploading avatar: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // 🔥 THÊM: Xóa avatar
+  Future<void> _deleteAvatar() async {
+    // Confirm dialog
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xóa ảnh đại diện?'),
+        content: const Text('Bạn có chắc muốn xóa ảnh đại diện không?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      setState(() => _isLoading = true);
+
+      await _avatarService.deleteAvatar();
+
+      if (mounted) {
+        await _loadUserData();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Đã xóa ảnh đại diện'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error deleting avatar: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -192,14 +397,45 @@ class _MemberInfoScreenState extends State<MemberInfoScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Center(
-                          child: CircleAvatar(
-                            radius: 50,
-                            backgroundImage: _authUser?.photoURL != null
-                                ? NetworkImage(_authUser!.photoURL!)
-                                : null,
-                            child: _authUser?.photoURL == null
-                                ? const Icon(Icons.person, size: 50)
-                                : null,
+                          child: Stack(
+                            children: [
+                              // Avatar hiện tại
+                              CircleAvatar(
+                                radius: 50,
+                                backgroundImage: _authUser?.photoURL != null
+                                    ? NetworkImage(_authUser!.photoURL!)
+                                    : null,
+                                child: _authUser?.photoURL == null
+                                    ? const Icon(Icons.person, size: 50)
+                                    : null,
+                              ),
+                              
+                              // Button để edit avatar (chỉ hiện khi đang edit)
+                              if (_isEditing)
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: _showAvatarOptions,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.primaryColor,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        size: 20,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 24),
