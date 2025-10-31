@@ -8,13 +8,15 @@ import '../../models/screen_model.dart';
 import '../../models/booking_model.dart';
 import '../../models/theater_model.dart';
 import '../../services/firestore_service.dart';
+import 'package:doan_mobile/screens/payment/payment_selection_screen.dart';
 
 class BookingScreen extends StatefulWidget {
   final Movie movie;
-  final Theater? theater; // ✅ Optional: có thể chọn từ cinema_selection hoặc null
+  final Theater?
+      theater; // ✅ Optional: có thể chọn từ cinema_selection hoặc null
 
   const BookingScreen({
-    super.key, 
+    super.key,
     required this.movie,
     this.theater, // ✅ Theater đã chọn từ cinema_selection_screen
   });
@@ -26,17 +28,17 @@ class BookingScreen extends StatefulWidget {
 class _BookingScreenState extends State<BookingScreen> {
   // ✅ NEW: Firestore service
   final _firestoreService = FirestoreService();
-  
+
   // ✅ OPTIMIZED: Dùng ValueNotifier thay vì setState cho từng state
   final ValueNotifier<String?> selectedDateNotifier = ValueNotifier(null);
   final ValueNotifier<Showtime?> selectedShowtimeNotifier = ValueNotifier(null);
   final ValueNotifier<Screen?> selectedScreenNotifier = ValueNotifier(null);
   final ValueNotifier<Theater?> selectedTheaterNotifier = ValueNotifier(null);
   final ValueNotifier<List<String>> selectedSeatsNotifier = ValueNotifier([]);
-  
+
   // ✅ Cache screen info để tránh gọi API nhiều lần
   final Map<String, Screen> _screenCache = {};
-  
+
   // ✅ Removed all hardcoded data
   // ❌ final List<String> availableDates = [...];
   // ❌ final List<String> availableTimes = [...];
@@ -63,12 +65,11 @@ class _BookingScreenState extends State<BookingScreen> {
   /// Preload screen data để cache (không cần setState nữa)
   Future<void> _preloadScreenData() async {
     try {
-      final showtimes = await _firestoreService
-          .getShowtimesByMovie(widget.movie.id)
-          .first;
-      
+      final showtimes =
+          await _firestoreService.getShowtimesByMovie(widget.movie.id).first;
+
       final screenIds = showtimes.map((s) => s.screenId).toSet();
-      
+
       for (var screenId in screenIds) {
         final screen = await _firestoreService.getScreenById(screenId);
         if (screen != null) {
@@ -189,7 +190,7 @@ class _BookingScreenState extends State<BookingScreen> {
     final filteredByTheater = widget.theater != null
         ? showtimes.where((s) => s.theaterId == widget.theater!.id).toList()
         : showtimes;
-    
+
     // Group showtimes by date
     final Map<String, List<Showtime>> groupedByDate = {};
     for (var showtime in filteredByTheater) {
@@ -205,7 +206,7 @@ class _BookingScreenState extends State<BookingScreen> {
           children: [
             // --- THÔNG TIN PHIM ---
             _buildMovieInfo(),
-            
+
             // --- THÔNG TIN RẠP (nếu đã chọn) ---
             if (widget.theater != null) ...[
               const SizedBox(height: 12),
@@ -214,11 +215,13 @@ class _BookingScreenState extends State<BookingScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+                  border:
+                      Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.location_on, color: AppTheme.primaryColor, size: 20),
+                    Icon(Icons.location_on,
+                        color: AppTheme.primaryColor, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -249,7 +252,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
               ),
             ],
-            
+
             const Divider(color: Colors.white12, height: 30),
 
             // --- ✅ CHỌN NGÀY (ValueListenableBuilder) ---
@@ -275,7 +278,7 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
                   );
                 }
-                
+
                 final filteredShowtimes = groupedByDate[selectedDate] ?? [];
                 return _buildShowtimeSelection(filteredShowtimes);
               },
@@ -286,7 +289,7 @@ class _BookingScreenState extends State<BookingScreen> {
               valueListenable: selectedShowtimeNotifier,
               builder: (context, selectedShowtime, _) {
                 if (selectedShowtime == null) return const SizedBox.shrink();
-                
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -388,7 +391,7 @@ class _BookingScreenState extends State<BookingScreen> {
           children: groupedByDate.keys.map((date) {
             final bool isSelected = date == selectedDate;
             final count = groupedByDate[date]!.length;
-            
+
             return ActionChip(
               label: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -427,8 +430,7 @@ class _BookingScreenState extends State<BookingScreen> {
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Text(
           'Không có suất chiếu cho ngày này',
-          style:
-              TextStyle(color: AppTheme.textSecondaryColor, fontSize: 14),
+          style: TextStyle(color: AppTheme.textSecondaryColor, fontSize: 14),
         ),
       );
     }
@@ -453,11 +455,11 @@ class _BookingScreenState extends State<BookingScreen> {
           children: showtimes.map((showtime) {
             final bool isSelected = selectedShowtime?.id == showtime.id;
             final canBook = showtime.availableSeats > 0;
-            
+
             // ✅ Dùng cache thay vì FutureBuilder
             final screen = _screenCache[showtime.screenId];
             final screenName = screen?.name ?? 'Đang tải...';
-            
+
             return InkWell(
               onTap: canBook
                   ? () async {
@@ -468,7 +470,8 @@ class _BookingScreenState extends State<BookingScreen> {
                     }
                   : null,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppTheme.primaryColor
@@ -522,7 +525,6 @@ class _BookingScreenState extends State<BookingScreen> {
 
   /// Hiển thị suất chiếu nhóm theo rạp (chưa chọn rạp) với ValueListenableBuilder
   Widget _buildGroupedShowtimeSelection(List<Showtime> showtimes) {
-
     // Group showtimes by theater
     final Map<String, List<Showtime>> groupedByTheater = {};
     for (var showtime in showtimes) {
@@ -537,12 +539,12 @@ class _BookingScreenState extends State<BookingScreen> {
           children: groupedByTheater.entries.map((entry) {
             final theaterId = entry.key;
             final theaterShowtimes = entry.value;
-            
+
             return FutureBuilder<Theater?>(
               future: _firestoreService.getTheaterById(theaterId),
               builder: (context, snapshot) {
                 final theaterName = snapshot.data?.name ?? 'Đang tải...';
-                
+
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(12),
@@ -557,7 +559,8 @@ class _BookingScreenState extends State<BookingScreen> {
                       // Theater name
                       Row(
                         children: [
-                          Icon(Icons.location_on, color: AppTheme.primaryColor, size: 18),
+                          Icon(Icons.location_on,
+                              color: AppTheme.primaryColor, size: 18),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -577,13 +580,14 @@ class _BookingScreenState extends State<BookingScreen> {
                         spacing: 8,
                         runSpacing: 8,
                         children: theaterShowtimes.map((showtime) {
-                          final bool isSelected = selectedShowtime?.id == showtime.id;
+                          final bool isSelected =
+                              selectedShowtime?.id == showtime.id;
                           final canBook = showtime.availableSeats > 0;
-                          
+
                           // ✅ Dùng cache thay vì FutureBuilder
                           final screen = _screenCache[showtime.screenId];
                           final screenName = screen?.name ?? 'Đang tải...';
-                          
+
                           return InkWell(
                             onTap: canBook
                                 ? () async {
@@ -594,11 +598,14 @@ class _BookingScreenState extends State<BookingScreen> {
                                   }
                                 : null,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? AppTheme.primaryColor
-                                    : (canBook ? AppTheme.fieldColor : Colors.grey[800]),
+                                    : (canBook
+                                        ? AppTheme.fieldColor
+                                        : Colors.grey[800]),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Column(
@@ -702,7 +709,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   valueListenable: selectedTheaterNotifier,
                   builder: (context, selectedTheater, _) {
                     if (selectedTheater == null) return const SizedBox.shrink();
-                    
+
                     return Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -711,7 +718,8 @@ class _BookingScreenState extends State<BookingScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.theaters, color: AppTheme.primaryColor, size: 20),
+                          Icon(Icons.theaters,
+                              color: AppTheme.primaryColor, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -809,15 +817,16 @@ class _BookingScreenState extends State<BookingScreen> {
             }
 
             // Column number (1-based, từ data)
-            final actualCol = col; // col đã là 1-12 cho IMAX, 1-10 cho Standard, 1-8 cho VIP
+            final actualCol =
+                col; // col đã là 1-12 cho IMAX, 1-10 cho Standard, 1-8 cho VIP
 
             // Tìm seat với row + column này
             final rowLetter = String.fromCharCode('A'.codeUnitAt(0) + row);
             final seatId = '$rowLetter$actualCol';
-            
+
             // ✅ Try to find seat - nếu không có thì là AISLE
             final seatIndex = screen.seats.indexWhere((s) => s.id == seatId);
-            
+
             if (seatIndex == -1) {
               // Không tìm thấy seat → đây là AISLE
               return Container(
@@ -915,9 +924,9 @@ class _BookingScreenState extends State<BookingScreen> {
                       (s) => s.id == seatId,
                       orElse: () => selectedScreen.seats.first,
                     );
-                    
+
                     seatTypes[seatId] = seat.type;
-                    
+
                     if (seat.type == 'vip') {
                       totalPrice += selectedShowtime.vipPrice;
                     } else {
@@ -934,11 +943,13 @@ class _BookingScreenState extends State<BookingScreen> {
                       children: [
                         Text(
                           "Ghế đã chọn:",
-                          style:
-                              TextStyle(color: AppTheme.textSecondaryColor, fontSize: 16),
+                          style: TextStyle(
+                              color: AppTheme.textSecondaryColor, fontSize: 16),
                         ),
                         Text(
-                          selectedSeats.isEmpty ? "Chưa chọn" : selectedSeats.join(", "),
+                          selectedSeats.isEmpty
+                              ? "Chưa chọn"
+                              : selectedSeats.join(", "),
                           style: TextStyle(
                             color: selectedSeats.isEmpty
                                 ? AppTheme.textSecondaryColor
@@ -962,13 +973,11 @@ class _BookingScreenState extends State<BookingScreen> {
                         ),
                         Text(
                           "${totalPrice.toStringAsFixed(0)} VNĐ",
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(
-                                fontSize: 18,
-                                color: AppTheme.primaryColor,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontSize: 18,
+                                    color: AppTheme.primaryColor,
+                                  ),
                         ),
                       ],
                     ),
@@ -976,9 +985,10 @@ class _BookingScreenState extends State<BookingScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: selectedShowtime == null || selectedSeats.isEmpty
-                            ? null
-                            : () => _confirmBooking(totalPrice, seatTypes),
+                        onPressed:
+                            selectedShowtime == null || selectedSeats.isEmpty
+                                ? null
+                                : () => _confirmBooking(totalPrice, seatTypes),
                         child: const Text(
                           "Xác nhận đặt vé",
                           style: TextStyle(
@@ -1009,7 +1019,7 @@ class _BookingScreenState extends State<BookingScreen> {
     final selectedScreen = selectedScreenNotifier.value;
     final selectedSeats = selectedSeatsNotifier.value;
     final selectedDate = selectedDateNotifier.value;
-    
+
     // 1. Check user logged in
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -1058,10 +1068,8 @@ class _BookingScreenState extends State<BookingScreen> {
           children: [
             Text('Phim: ${widget.movie.title}'),
             const SizedBox(height: 8),
-            if (selectedTheater != null)
-              Text('Rạp: ${selectedTheater.name}'),
-            if (selectedScreen != null)
-              Text('Phòng: ${selectedScreen.name}'),
+            if (selectedTheater != null) Text('Rạp: ${selectedTheater.name}'),
+            if (selectedScreen != null) Text('Phòng: ${selectedScreen.name}'),
             const SizedBox(height: 8),
             Text('Ngày: $selectedDate'),
             Text('Giờ: ${selectedShowtime.getTime()}'),
@@ -1103,10 +1111,13 @@ class _BookingScreenState extends State<BookingScreen> {
         userId: user.uid,
         showtimeId: selectedShowtime.id,
         movieId: widget.movie.id,
+        movieTitle: widget.movie.title,
         theaterId: selectedShowtime.theaterId,
         screenId: selectedShowtime.screenId,
         selectedSeats: selectedSeats,
         seatTypes: seatTypes,
+        theaterName: selectedTheater?.name ?? '',
+        screenName: selectedScreen?.name ?? '',
         totalPrice: totalPrice,
         status: 'pending',
         createdAt: DateTime.now(),
@@ -1118,59 +1129,22 @@ class _BookingScreenState extends State<BookingScreen> {
       EasyLoading.dismiss();
 
       if (!mounted) return;
+      if (mounted) {
+        // Dùng rootNavigator: true để đóng dialog "Xác nhận"
+        Navigator.of(context, rootNavigator: true).pop();
 
-      // Show success
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.green, size: 30),
-              const SizedBox(width: 12),
-              const Text('Đặt vé thành công!'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Mã đặt vé: ${bookingId.substring(0, 8).toUpperCase()}'),
-              const SizedBox(height: 8),
-              Text('Phim: ${widget.movie.title}'),
-              Text('Ghế: ${selectedSeats.join(", ")}'),
-              Text('Tổng: ${totalPrice.toStringAsFixed(0)} VNĐ'),
-              const SizedBox(height: 12),
-              Text(
-                'Vui lòng đến quầy thanh toán trước giờ chiếu 15 phút.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textSecondaryColor,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Back to previous screen
-              },
-              child: const Text('Đóng'),
+        // Chuyển sang màn hình Chọn Thanh toán
+        // Dùng pushReplacement để người dùng không "back" lại được màn hình chọn ghế
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymentSelectionScreen(
+              bookingId: bookingId, // ID booking vừa tạo
+              amount: totalPrice, // Tổng tiền đã tính
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Back to previous screen
-                // TODO: Navigate to ticket screen
-                // Navigator.pushNamed(context, '/tickets');
-              },
-              child: const Text('Xem vé của tôi'),
-            ),
-          ],
-        ),
-      );
+          ),
+        );
+      }
     } catch (e) {
       EasyLoading.dismiss();
 
@@ -1178,7 +1152,8 @@ class _BookingScreenState extends State<BookingScreen> {
 
       String errorMessage = 'Đặt vé thất bại';
       if (e.toString().contains('đã được đặt')) {
-        errorMessage = 'Ghế đã được đặt bởi người khác.\nVui lòng chọn ghế khác.';
+        errorMessage =
+            'Ghế đã được đặt bởi người khác.\nVui lòng chọn ghế khác.';
       } else if (e.toString().contains('không tồn tại')) {
         errorMessage = 'Lịch chiếu không tồn tại hoặc đã bị hủy.';
       } else {

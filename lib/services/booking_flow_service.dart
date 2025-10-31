@@ -7,7 +7,7 @@ import 'dynamic_pricing_service.dart';
 import 'firestore_service.dart';
 
 /// Orchestrator service điều phối toàn bộ booking flow
-/// 
+///
 /// ✅ FLOW HOÀN CHỈNH:
 /// 1. **Validate Showtime**: Kiểm tra suất chiếu còn khả dụng
 /// 2. **Hold Seats**: Giữ ghế tạm thời (10 phút)
@@ -15,11 +15,11 @@ import 'firestore_service.dart';
 /// 4. **Create Booking**: Tạo booking (transaction-based)
 /// 5. **Process Payment**: Xử lý thanh toán
 /// 6. **Confirm/Release**: Confirm nếu thành công, release nếu thất bại
-/// 
+///
 /// USAGE:
 /// ```dart
 /// final flow = BookingFlowService();
-/// 
+///
 /// // Start booking process
 /// final result = await flow.startBookingProcess(
 ///   userId: user.uid,
@@ -29,7 +29,7 @@ import 'firestore_service.dart';
 ///   movieType: MovieType.twoD,
 ///   screenType: ScreenType.standard,
 /// );
-/// 
+///
 /// if (result.success) {
 ///   // Proceed to payment
 ///   final paymentResult = await flow.processPayment(
@@ -43,7 +43,7 @@ class BookingFlowService {
   final FirestoreService _firestoreService = FirestoreService();
   final SeatHoldService _seatHoldService = SeatHoldService();
   final DynamicPricingService _pricingService = DynamicPricingService();
-  
+
   /// ✅ STEP 1: Validate showtime có available không
   Future<BookingValidationResult> validateShowtime(
     String showtimeId,
@@ -52,14 +52,14 @@ class BookingFlowService {
     try {
       // 1. Kiểm tra showtime tồn tại
       final showtime = await _firestoreService.getShowtimeById(showtimeId);
-      
+
       if (showtime == null) {
         return BookingValidationResult(
           isValid: false,
           error: 'Suất chiếu không tồn tại',
         );
       }
-      
+
       // 2. Kiểm tra showtime đã qua chưa
       if (showtime.startTime.isBefore(DateTime.now())) {
         return BookingValidationResult(
@@ -67,7 +67,7 @@ class BookingFlowService {
           error: 'Suất chiếu đã qua',
         );
       }
-      
+
       // 3. Kiểm tra showtime đã bị cancel chưa
       if (showtime.status != 'active') {
         return BookingValidationResult(
@@ -75,7 +75,7 @@ class BookingFlowService {
           error: 'Suất chiếu không còn hoạt động',
         );
       }
-      
+
       // 4. Kiểm tra số ghế còn đủ không
       if (showtime.availableSeats < requestedSeats.length) {
         return BookingValidationResult(
@@ -83,30 +83,29 @@ class BookingFlowService {
           error: 'Không đủ ghế trống (còn ${showtime.availableSeats} ghế)',
         );
       }
-      
+
       // 5. Kiểm tra các ghế cụ thể có bị booked/held không
       final bookedSeats = showtime.bookedSeats;
       final heldSeats = await _seatHoldService.getHeldSeats(showtimeId);
-      
+
       final conflicts = <String>[];
       for (var seat in requestedSeats) {
         if (bookedSeats.contains(seat) || heldSeats.contains(seat)) {
           conflicts.add(seat);
         }
       }
-      
+
       if (conflicts.isNotEmpty) {
         return BookingValidationResult(
           isValid: false,
           error: 'Ghế ${conflicts.join(", ")} đã được đặt hoặc đang giữ',
         );
       }
-      
+
       return BookingValidationResult(
         isValid: true,
         showtime: showtime,
       );
-      
     } catch (e) {
       return BookingValidationResult(
         isValid: false,
@@ -114,7 +113,7 @@ class BookingFlowService {
       );
     }
   }
-  
+
   /// ✅ STEP 2: Bắt đầu booking process (validate + hold seats)
   Future<BookingStartResult> startBookingProcess({
     required String userId,
@@ -128,16 +127,16 @@ class BookingFlowService {
     try {
       // 1. Validate showtime
       final validation = await validateShowtime(showtimeId, selectedSeats);
-      
+
       if (!validation.isValid) {
         return BookingStartResult(
           success: false,
           error: validation.error,
         );
       }
-      
+
       final showtime = validation.showtime!;
-      
+
       // 2. Hold seats
       final holdId = await _seatHoldService.holdSeats(
         showtimeId: showtimeId,
@@ -145,14 +144,14 @@ class BookingFlowService {
         userId: userId,
         holdDurationMinutes: holdDurationMinutes,
       );
-      
+
       if (holdId == null) {
         return BookingStartResult(
           success: false,
           error: 'Không thể giữ ghế. Vui lòng thử lại.',
         );
       }
-      
+
       // 3. Calculate price
       final priceBreakdown = _pricingService.calculateTotalPrice(
         seats: seatTypes,
@@ -160,7 +159,7 @@ class BookingFlowService {
         screenType: screenType,
         showtime: showtime.startTime,
       );
-      
+
       // 4. Create pending booking data (chưa lưu Firestore)
       final bookingData = {
         'userId': userId,
@@ -175,7 +174,7 @@ class BookingFlowService {
         'status': 'pending',
         'holdId': holdId,
       };
-      
+
       return BookingStartResult(
         success: true,
         holdId: holdId,
@@ -184,7 +183,6 @@ class BookingFlowService {
         bookingData: bookingData,
         expiresAt: DateTime.now().add(Duration(minutes: holdDurationMinutes)),
       );
-      
     } catch (e) {
       return BookingStartResult(
         success: false,
@@ -192,7 +190,7 @@ class BookingFlowService {
       );
     }
   }
-  
+
   /// ✅ STEP 3: Confirm booking và tạo vào Firestore
   Future<BookingConfirmResult> confirmBooking({
     required Map<String, dynamic> bookingData,
@@ -200,51 +198,65 @@ class BookingFlowService {
   }) async {
     try {
       // 1. Verify hold còn active không
-      final remainingSeconds = await _seatHoldService.getHoldRemainingSeconds(holdId);
-      
+      final remainingSeconds =
+          await _seatHoldService.getHoldRemainingSeconds(holdId);
+
       if (remainingSeconds <= 0) {
         return BookingConfirmResult(
           success: false,
           error: 'Hết thời gian giữ chỗ. Vui lòng chọn lại.',
         );
       }
-      
+
       // 2. Create booking với transaction
       final booking = Booking(
-        id: '',
+        id: '', // Bạn có thể bỏ qua trường 'id' này nếu constructor của bạn
+        // (trong booking_model.dart) không bắt buộc nó (ví dụ: `String? id`).
+        // Nếu nó *bắt buộc*, hãy để id: '' như bạn đã làm.
+
         userId: bookingData['userId'],
         showtimeId: bookingData['showtimeId'],
         movieId: bookingData['movieId'],
         theaterId: bookingData['theaterId'],
         screenId: bookingData['screenId'],
+
+        // --- SỬA Ở ĐÂY: THÊM CÁC TRƯỜNG ĐÃ SAO CHÉP (BẮT BUỘC) ---
+        // (Bạn phải đảm bảo bookingData có các key này)
+        movieTitle: bookingData['movieTitle'] as String,
+        theaterName: bookingData['theaterName'] as String,
+        screenName: bookingData['screenName']
+            as String, // 'screenName' hoặc 'roomName' tùy bạn đặt
+        // -----------------------------------------------------
+
         selectedSeats: List<String>.from(bookingData['selectedSeats']),
         seatTypes: Map<String, String>.from(bookingData['seatTypes']),
-        totalPrice: bookingData['totalPrice'],
+        totalPrice:
+            (bookingData['totalPrice'] as num).toDouble(), // Ép kiểu an toàn
         status: 'pending',
-        createdAt: DateTime.now(),
+        createdAt:
+            DateTime.now(), // .toMap() sẽ chuyển nó thành Timestamp khi lưu
       );
-      
+
       final bookingId = await _firestoreService.createBooking(booking);
-      
+
       // 3. Confirm hold (không auto-release nữa)
       await _seatHoldService.confirmHold(holdId);
-      
+
       return BookingConfirmResult(
         success: true,
         bookingId: bookingId,
       );
-      
     } catch (e) {
       // Nếu lỗi → release hold
       await _seatHoldService.releaseHold(holdId, reason: 'booking_failed');
-      
+
       return BookingConfirmResult(
         success: false,
         error: 'Lỗi tạo booking: $e',
       );
     }
   }
-  
+
   /// ✅ STEP 4: Process payment
   Future<PaymentResult> processPayment({
     required String bookingId,
@@ -254,14 +266,14 @@ class BookingFlowService {
     try {
       // 1. Get booking
       final booking = await _firestoreService.getBookingById(bookingId);
-      
+
       if (booking == null) {
         return PaymentResult(
           success: false,
           error: 'Booking không tồn tại',
         );
       }
-      
+
       // 2. Check booking status
       if (booking.status != 'pending') {
         return PaymentResult(
@@ -269,7 +281,7 @@ class BookingFlowService {
           error: 'Booking không ở trạng thái pending',
         );
       }
-      
+
       // 3. Create payment record
       final payment = Payment(
         id: '',
@@ -281,28 +293,28 @@ class BookingFlowService {
         createdAt: DateTime.now(),
         transactionId: transactionId,
       );
-      
+
       final paymentId = await _firestoreService.createPayment(payment);
-      
+
       // 4. Simulate payment processing (trong thực tế gọi API gateway)
       await Future.delayed(Duration(seconds: 1));
-      
+
       // 5. Update payment status to success
       await _firestoreService.updatePaymentStatus(
         paymentId,
         'success',
-        transactionId: transactionId ?? 'TXN-${DateTime.now().millisecondsSinceEpoch}',
+        transactionId:
+            transactionId ?? 'TXN-${DateTime.now().millisecondsSinceEpoch}',
       );
-      
+
       // 6. Update booking status to confirmed
       await _firestoreService.updateBookingStatus(bookingId, 'confirmed');
-      
+
       return PaymentResult(
         success: true,
         paymentId: paymentId,
         transactionId: transactionId,
       );
-      
     } catch (e) {
       return PaymentResult(
         success: false,
@@ -310,9 +322,9 @@ class BookingFlowService {
       );
     }
   }
-  
+
   /// ✅ COMPLETE FLOW: Start → Confirm → Payment (all-in-one)
-  /// 
+  ///
   /// Dùng khi muốn xử lý toàn bộ flow trong 1 lần gọi
   Future<CompleteBookingResult> completeBookingFlow({
     required String userId,
@@ -334,7 +346,7 @@ class BookingFlowService {
         movieType: movieType,
         screenType: screenType,
       );
-      
+
       if (!startResult.success) {
         return CompleteBookingResult(
           success: false,
@@ -342,13 +354,13 @@ class BookingFlowService {
           step: 'start',
         );
       }
-      
+
       // Step 2: Confirm
       final confirmResult = await confirmBooking(
         bookingData: startResult.bookingData!,
         holdId: startResult.holdId!,
       );
-      
+
       if (!confirmResult.success) {
         return CompleteBookingResult(
           success: false,
@@ -356,18 +368,18 @@ class BookingFlowService {
           step: 'confirm',
         );
       }
-      
+
       // Step 3: Payment
       final paymentResult = await processPayment(
         bookingId: confirmResult.bookingId!,
         method: paymentMethod,
         transactionId: transactionId,
       );
-      
+
       if (!paymentResult.success) {
         // Rollback: Cancel booking
         await _firestoreService.cancelBooking(confirmResult.bookingId!);
-        
+
         return CompleteBookingResult(
           success: false,
           error: paymentResult.error,
@@ -375,7 +387,7 @@ class BookingFlowService {
           bookingId: confirmResult.bookingId,
         );
       }
-      
+
       return CompleteBookingResult(
         success: true,
         bookingId: confirmResult.bookingId,
@@ -383,7 +395,6 @@ class BookingFlowService {
         totalPrice: startResult.totalPrice,
         step: 'completed',
       );
-      
     } catch (e) {
       return CompleteBookingResult(
         success: false,
@@ -392,16 +403,15 @@ class BookingFlowService {
       );
     }
   }
-  
+
   /// ✅ Cancel booking flow
   Future<CancelBookingResult> cancelBooking(String bookingId) async {
     try {
       await _firestoreService.cancelBooking(bookingId);
-      
+
       return CancelBookingResult(
         success: true,
       );
-      
     } catch (e) {
       return CancelBookingResult(
         success: false,
@@ -409,12 +419,12 @@ class BookingFlowService {
       );
     }
   }
-  
+
   /// ✅ Extend hold time (gia hạn thời gian giữ chỗ)
   Future<bool> extendHoldTime(String holdId, int additionalMinutes) async {
     return await _seatHoldService.extendHold(holdId, additionalMinutes);
   }
-  
+
   /// ✅ Release hold (người dùng cancel trước khi booking)
   Future<bool> releaseHold(String holdId) async {
     return await _seatHoldService.releaseHold(holdId, reason: 'user_cancel');
@@ -429,7 +439,7 @@ class BookingValidationResult {
   final bool isValid;
   final String? error;
   final dynamic showtime;
-  
+
   BookingValidationResult({
     required this.isValid,
     this.error,
@@ -445,7 +455,7 @@ class BookingStartResult {
   final PriceBreakdown? priceBreakdown;
   final Map<String, dynamic>? bookingData;
   final DateTime? expiresAt;
-  
+
   BookingStartResult({
     required this.success,
     this.error,
@@ -461,7 +471,7 @@ class BookingConfirmResult {
   final bool success;
   final String? error;
   final String? bookingId;
-  
+
   BookingConfirmResult({
     required this.success,
     this.error,
@@ -474,7 +484,7 @@ class PaymentResult {
   final String? error;
   final String? paymentId;
   final String? transactionId;
-  
+
   PaymentResult({
     required this.success,
     this.error,
@@ -490,7 +500,7 @@ class CompleteBookingResult {
   final String? paymentId;
   final double? totalPrice;
   final String step;
-  
+
   CompleteBookingResult({
     required this.success,
     this.error,
@@ -504,7 +514,7 @@ class CompleteBookingResult {
 class CancelBookingResult {
   final bool success;
   final String? error;
-  
+
   CancelBookingResult({
     required this.success,
     this.error,
@@ -518,14 +528,14 @@ extension PriceBreakdownJson on PriceBreakdown {
       'total': total,
       'seatCount': seatCount,
       'breakdown': breakdown.map((k, v) => MapEntry(
-        k.name,
-        {
-          'count': v.count,
-          'pricePerSeat': v.pricePerSeat,
-          'totalPrice': v.totalPrice,
-          'seatIds': v.seatIds,
-        },
-      )),
+            k.name,
+            {
+              'count': v.count,
+              'pricePerSeat': v.pricePerSeat,
+              'totalPrice': v.totalPrice,
+              'seatIds': v.seatIds,
+            },
+          )),
     };
   }
 }

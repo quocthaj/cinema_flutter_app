@@ -19,12 +19,8 @@ class FirestoreService {
 
   /// Lấy danh sách phim theo real-time
   Stream<List<Movie>> getMoviesStream() {
-    return _db
-        .collection('movies')
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Movie.fromFirestore(doc))
-            .toList());
+    return _db.collection('movies').snapshots().map((snapshot) =>
+        snapshot.docs.map((doc) => Movie.fromFirestore(doc)).toList());
   }
 
   /// Lấy phim theo trạng thái
@@ -33,9 +29,8 @@ class FirestoreService {
         .collection('movies')
         .where('status', isEqualTo: status)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Movie.fromFirestore(doc))
-            .toList());
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Movie.fromFirestore(doc)).toList());
   }
 
   /// Lấy chi tiết một phim
@@ -69,12 +64,8 @@ class FirestoreService {
 
   /// Lấy danh sách rạp theo real-time
   Stream<List<Theater>> getTheatersStream() {
-    return _db
-        .collection('theaters')
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Theater.fromFirestore(doc))
-            .toList());
+    return _db.collection('theaters').snapshots().map((snapshot) =>
+        snapshot.docs.map((doc) => Theater.fromFirestore(doc)).toList());
   }
 
   /// Lấy danh sách rạp theo thành phố
@@ -83,9 +74,8 @@ class FirestoreService {
         .collection('theaters')
         .where('city', isEqualTo: city)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Theater.fromFirestore(doc))
-            .toList());
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Theater.fromFirestore(doc)).toList());
   }
 
   /// Lấy chi tiết một rạp
@@ -113,9 +103,8 @@ class FirestoreService {
         .collection('screens')
         .where('theaterId', isEqualTo: theaterId)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Screen.fromFirestore(doc))
-            .toList());
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Screen.fromFirestore(doc)).toList());
   }
 
   /// Lấy chi tiết một phòng chiếu
@@ -145,30 +134,27 @@ class FirestoreService {
         .where('status', isEqualTo: 'active')
         .orderBy('startTime')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Showtime.fromFirestore(doc))
-            .toList());
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Showtime.fromFirestore(doc)).toList());
   }
 
   /// Lấy lịch chiếu theo rạp và ngày
   Stream<List<Showtime>> getShowtimesByTheaterAndDate(
-    String theaterId, 
-    DateTime date
-  ) {
+      String theaterId, DateTime date) {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(Duration(days: 1));
 
     return _db
         .collection('showtimes')
         .where('theaterId', isEqualTo: theaterId)
-        .where('startTime', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('startTime',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
         .where('startTime', isLessThan: Timestamp.fromDate(endOfDay))
         .where('status', isEqualTo: 'active')
         .orderBy('startTime')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Showtime.fromFirestore(doc))
-            .toList());
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Showtime.fromFirestore(doc)).toList());
   }
 
   /// Lấy chi tiết một lịch chiếu
@@ -187,7 +173,8 @@ class FirestoreService {
   }
 
   /// Cập nhật ghế đã đặt trong showtime
-  Future<void> updateBookedSeats(String showtimeId, List<String> bookedSeats) async {
+  Future<void> updateBookedSeats(
+      String showtimeId, List<String> bookedSeats) async {
     await _db.collection('showtimes').doc(showtimeId).update({
       'bookedSeats': bookedSeats,
       'availableSeats': FieldValue.increment(-bookedSeats.length),
@@ -205,13 +192,14 @@ class FirestoreService {
       // 1. Kiểm tra ghế còn trống
       final showtimeRef = _db.collection('showtimes').doc(booking.showtimeId);
       final showtimeDoc = await transaction.get(showtimeRef);
-      
+
       if (!showtimeDoc.exists) {
         throw Exception('Lịch chiếu không tồn tại');
       }
 
-      final bookedSeats = List<String>.from(showtimeDoc.data()?['bookedSeats'] ?? []);
-      
+      final bookedSeats =
+          List<String>.from(showtimeDoc.data()?['bookedSeats'] ?? []);
+
       // Kiểm tra ghế đã được đặt chưa
       for (var seat in booking.selectedSeats) {
         if (bookedSeats.contains(seat)) {
@@ -241,9 +229,8 @@ class FirestoreService {
         .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Booking.fromFirestore(doc))
-            .toList());
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Booking.fromFirestore(doc)).toList());
   }
 
   /// Lấy chi tiết một booking
@@ -274,7 +261,7 @@ class FirestoreService {
       }
 
       final booking = Booking.fromFirestore(bookingDoc);
-      
+
       // 1. Cập nhật trạng thái booking
       transaction.update(bookingRef, {
         'status': 'cancelled',
@@ -284,11 +271,12 @@ class FirestoreService {
       // 2. Trả lại ghế cho showtime
       final showtimeRef = _db.collection('showtimes').doc(booking.showtimeId);
       final showtimeDoc = await transaction.get(showtimeRef);
-      
+
       if (showtimeDoc.exists) {
-        final bookedSeats = List<String>.from(showtimeDoc.data()?['bookedSeats'] ?? []);
+        final bookedSeats =
+            List<String>.from(showtimeDoc.data()?['bookedSeats'] ?? []);
         bookedSeats.removeWhere((seat) => booking.selectedSeats.contains(seat));
-        
+
         transaction.update(showtimeRef, {
           'bookedSeats': bookedSeats,
           'availableSeats': FieldValue.increment(booking.selectedSeats.length),
@@ -304,12 +292,12 @@ class FirestoreService {
   /// Tạo payment mới
   Future<String> createPayment(Payment payment) async {
     final docRef = await _db.collection('payments').add(payment.toMap());
-    
+
     // Cập nhật paymentId vào booking
     await _db.collection('bookings').doc(payment.bookingId).update({
       'paymentId': docRef.id,
     });
-    
+
     return docRef.id;
   }
 
@@ -328,11 +316,8 @@ class FirestoreService {
   }
 
   /// Cập nhật trạng thái payment
-  Future<void> updatePaymentStatus(
-    String paymentId, 
-    String status, 
-    {String? transactionId}
-  ) async {
+  Future<void> updatePaymentStatus(String paymentId, String status,
+      {String? transactionId}) async {
     final data = <String, dynamic>{
       'status': status,
     };
@@ -354,7 +339,8 @@ class FirestoreService {
 
   /// Tạo hoặc cập nhật user document
   /// 🔥 ADMIN: Tạo user document với auto-promote nếu trong whitelist
-  Future<void> createUserDocument(User user, [String? displayName, String? role]) async {
+  Future<void> createUserDocument(User user,
+      [String? displayName, String? role]) async {
     final userRef = _db.collection('users').doc(user.uid);
     final doc = await userRef.get();
 
@@ -438,5 +424,52 @@ class FirestoreService {
     await _db.collection('users').doc(userId).update({
       'favoriteMovies': FieldValue.arrayRemove([movieId]),
     });
+  }
+
+  Future<TransactionReceipt> getReceiptDetails(String paymentDocId) async {
+    try {
+      // 1. Lấy thông tin Thanh toán (Payment)
+      final paymentDoc =
+          await _db.collection('payments').doc(paymentDocId).get();
+      if (!paymentDoc.exists) {
+        throw Exception('Không tìm thấy giao dịch thanh toán.');
+      }
+      final payment = Payment.fromFirestore(paymentDoc);
+
+      if (payment.status != 'success') {
+        throw Exception('Giao dịch chưa thành công.');
+      }
+
+      // 2. Lấy thông tin Đặt vé (Booking) từ bookingId
+      final bookingDoc =
+          await _db.collection('bookings').doc(payment.bookingId).get();
+      if (!bookingDoc.exists) {
+        throw Exception('Không tìm thấy thông tin đặt vé.');
+      }
+      // Dùng model Booking chi tiết của bạn
+      final booking = Booking.fromFirestore(bookingDoc);
+
+      // 3. Lấy thông tin Phim (Movie) - Vẫn cần để lấy posterUrl nếu muốn
+      // (Bỏ qua bước này nếu biên lai không cần ảnh)
+
+      // 4. Ghép dữ liệu lại thành TransactionReceipt
+      // (Sửa lại để dùng các trường trong model Booking mới)
+      return TransactionReceipt(
+        transactionId: payment.id,
+        movieTitle: booking.movieTitle, // <-- Lấy từ Booking (đã sao chép)
+        theaterName: booking.theaterName, // <-- Lấy từ Booking (đã sao chép)
+        roomName: booking.screenName, // <-- Lấy từ Booking (đã sao chép)
+        showtime: booking
+            .createdAt, // <-- Sửa: Lấy từ booking.createdAt hoặc 1 trường thời gian đúng
+        seats: booking.selectedSeats, // <-- Dùng 'selectedSeats'
+        amountPaid: payment.amount,
+        paymentMethod: payment.methodName,
+        paymentTime: payment.completedAt ?? payment.createdAt,
+        status: payment.status,
+      );
+    } catch (e) {
+      print("Lỗi getReceiptDetails: $e");
+      rethrow;
+    }
   }
 }

@@ -1,31 +1,52 @@
-import 'package:doan_mobile/services/auth_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'config/theme.dart';
-import 'screens/home/home_screen.dart';
+import 'package:provider/provider.dart'; // <-- Dùng Provider
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart'; // <-- Dùng EasyLoading
+
+// --- THÊM CÁC IMPORT SERVICE ---
+// (Hãy đảm bảo các đường dẫn này là chính xác)
+import 'package:doan_mobile/services/auth_service.dart';
+import 'package:doan_mobile/services/firestore_service.dart';
+import 'package:doan_mobile/services/payment_service.dart';
+
+// --- SỬA ĐƯỜNG DẪN MÀN HÌNH ---
+// (AuthWrapper sẽ được tạo ở file riêng, file 2)
+import 'auth_wrapper.dart';
+import 'package:doan_mobile/config/theme.dart'; // Theme của bạn
 import 'firebase_options.dart';
 
 void main() async {
-  // Đảm bảo Flutter đã sẵn sàng
+  // 1. Đảm bảo khởi động Flutter và Firebase
   WidgetsFlutterBinding.ensureInitialized();
-
-  //Khởi tạo firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // SỬA: Chạy MyApp mà không cần isLoggedIn
-  runApp(const MyApp());
+  // 2. Cấu hình EasyLoading (từ code của bạn)
+  configLoading();
+
+  // 3. Chạy ứng dụng và bọc nó bằng MultiProvider
+  runApp(
+    MultiProvider(
+      providers: [
+        // --- CUNG CẤP CÁC SERVICE ---
+
+        // Cung cấp AuthService
+        // (Lưu ý: Nếu AuthService là ChangeNotifier, hãy dùng ChangeNotifierProvider)
+        Provider<AuthService>(create: (_) => AuthService()),
+
+        // Cung cấp FirestoreService
+        Provider<FirestoreService>(create: (_) => FirestoreService()),
+
+        // Cung cấp PaymentService (phiên bản Deep Link không cần ChangeNotifier)
+        Provider<PaymentService>(create: (_) => PaymentService()),
+      ],
+      child: const MyApp(), // Chạy ứng dụng chính
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
-  // XÓA: Không cần biến isLoggedIn
-  // final bool isLoggedIn;
-  // const MyApp({super.key, required this.isLoggedIn});
-
-  // SỬA: Constructor (hàm khởi tạo) đơn giản
   const MyApp({super.key});
 
   @override
@@ -33,46 +54,19 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Cinema Booking',
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.darkTheme, // Giữ theme của bạn
+
       // SỬA: 'home' bây giờ SẼ LUÔN LÀ AuthWrapper.
       // AuthWrapper sẽ tự quyết định hiển thị HomeScreen hay LoginScreen.
       home: const AuthWrapper(),
+
+      // THÊM: Khởi tạo EasyLoading cho MaterialApp
+      builder: EasyLoading.init(),
     );
   }
 }
 
-// Lớp AuthWrapper này sẽ lắng nghe trạng thái đăng nhập từ Firebase
-// và tự động điều hướng người dùng
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final authService = AuthService();
-
-    return StreamBuilder<User?>(
-      stream: authService.authStateChanges,
-      builder: (context, snapshot) {
-        // Đang kiểm tra...
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        // Đã đăng nhập
-        if (snapshot.hasData) {
-          return const HomeScreen();
-        }
-
-        // Chưa đăng nhập
-        return const HomeScreen();
-      },
-    );
-  }
-}
-
-// Cấu hình EasyLoading (tùy chỉnh theo ý bạn)
+// Cấu hình EasyLoading (từ code của bạn)
 void configLoading() {
   EasyLoading.instance
     ..displayDuration = const Duration(milliseconds: 2000)
