@@ -27,31 +27,29 @@ class _MovieScreenState extends State<MovieScreen>
   // Thêm trạng thái loading cho shimmer
   bool _isLoading = true;
 
+  // Trả về màu tương ứng cho ageRating
+  Color _ageRatingColor(String? rating) {
+    if (rating == null || rating.isEmpty) return Colors.grey;
+    final r = rating.toUpperCase();
+    if (r == 'P') return Colors.green; // Phù hợp mọi lứa tuổi
+    if (r == 'K') return Colors.blue; // Khán giả nhỏ tuổi
+    if (r.startsWith('T')) {
+      if (r.contains('18')) return Colors.red;
+      if (r.contains('16')) return Colors.deepOrange;
+      if (r.contains('13')) return Colors.amber;
+      return Colors.orange;
+    }
+    return Colors.grey;
+  }
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    // --- XÓA HÀM NÀY ---
-    // _checkLogin();
   }
-
-  // --- XÓA HÀM NÀY ---
-  // void _checkLogin() {
-  //   final user = _authService.currentUser;
-  //   setState(() => _isLoggedIn = (user != null));
-  // }
 
   // --- SỬA LẠI HÀM NÀY ---
   void _openMovie(Movie movie) {
-    // --- XÓA LOGIC CHECK LOGIN ---
-    // if (!_isLoggedIn) {
-    //   Navigator.push(
-    //     context,
-    //     MaterialPageRoute(builder: (_) => const LoginScreen()),
-    //   ).then((_) => _checkLogin()); // Kiểm tra lại login sau khi quay về
-    //   return;
-    // }
-
     // LUÔN ĐI THẲNG VÀO MOVIE DETAIL
     Navigator.push(
       context,
@@ -292,6 +290,39 @@ class _MovieScreenState extends State<MovieScreen>
                         "${movie.rating}",
                         style: const TextStyle(color: Colors.white70),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  // Hiển thị duration và ageRating (với màu sắc khác nhau cho ageRating)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.schedule,
+                              size: 14, color: Colors.white70),
+                          const SizedBox(width: 6),
+                          Text(
+                            "${movie.duration} phút",
+                            style:
+                                const TextStyle(color: Colors.white70, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                      if ((movie.ageRating ?? '').isNotEmpty)
+                        Chip(
+                          backgroundColor: _ageRatingColor(movie.ageRating),
+                          label: Text(
+                            movie.ageRating ?? '',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 0),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 6),
