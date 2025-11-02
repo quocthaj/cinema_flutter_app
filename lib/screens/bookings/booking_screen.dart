@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../config/theme.dart';
-import '../../models/movie.dart';
-import '../../models/showtime.dart';
-import '../../models/screen_model.dart';
-import '../../models/booking_model.dart';
-import '../../models/theater_model.dart';
-import '../../services/firestore_service.dart';
+import 'package:provider/provider.dart'; // <-- THÊM: Dùng Provider
+import 'package:doan_mobile/config/theme.dart'; // Sửa đường dẫn nếu cần
+import 'package:doan_mobile/models/movie.dart'; // Sửa đường dẫn nếu cần
+import 'package:doan_mobile/models/showtime.dart'; // Sửa đường dẫn nếu cần
+import 'package:doan_mobile/models/screen_model.dart'; // Sửa đường dẫn nếu cần
+import 'package:doan_mobile/models/booking_model.dart'; // Sửa đường dẫn nếu cần
+import 'package:doan_mobile/models/theater_model.dart'; // Sửa đường dẫn nếu cần
+// SỬA: Đảm bảo đường dẫn này chính xác
+import 'package:doan_mobile/services/firestore_service.dart';
 import 'package:doan_mobile/screens/payment/payment_selection_screen.dart';
+// SỬA: Đảm bảo đường dẫn này chính xác
+import 'package:doan_mobile/screens/auth/login_screen.dart';
+import 'package:doan_mobile/services/auth_service.dart'; // <-- THÊM: Đảm bảo AuthService được import
+import 'package:intl/intl.dart'; // <-- THÊM: Để định dạng tiền
 
 class BookingScreen extends StatefulWidget {
   final Movie movie;
@@ -26,8 +32,8 @@ class BookingScreen extends StatefulWidget {
 }
 
 class _BookingScreenState extends State<BookingScreen> {
-  // ✅ NEW: Firestore service
-  final _firestoreService = FirestoreService();
+  // SỬA: Lấy service từ Provider
+  late final FirestoreService _firestoreService;
 
   // ✅ OPTIMIZED: Dùng ValueNotifier thay vì setState cho từng state
   final ValueNotifier<String?> selectedDateNotifier = ValueNotifier(null);
@@ -39,15 +45,11 @@ class _BookingScreenState extends State<BookingScreen> {
   // ✅ Cache screen info để tránh gọi API nhiều lần
   final Map<String, Screen> _screenCache = {};
 
-  // ✅ Removed all hardcoded data
-  // ❌ final List<String> availableDates = [...];
-  // ❌ final List<String> availableTimes = [...];
-  // ❌ final List<String> soldSeats = [...];
-  // ❌ final List<String> seatList = [...];
-
   @override
   void initState() {
     super.initState();
+    // SỬA: Lấy service từ Provider
+    _firestoreService = Provider.of<FirestoreService>(context, listen: false);
     _preloadScreenData();
   }
 
@@ -71,9 +73,12 @@ class _BookingScreenState extends State<BookingScreen> {
       final screenIds = showtimes.map((s) => s.screenId).toSet();
 
       for (var screenId in screenIds) {
-        final screen = await _firestoreService.getScreenById(screenId);
-        if (screen != null) {
-          _screenCache[screenId] = screen;
+        // SỬA: Đảm bảo _screenCache được cập nhật an toàn
+        if (_screenCache[screenId] == null) {
+          final screen = await _firestoreService.getScreenById(screenId);
+          if (screen != null && mounted) {
+            _screenCache[screenId] = screen;
+          }
         }
       }
     } catch (e) {
@@ -458,7 +463,8 @@ class _BookingScreenState extends State<BookingScreen> {
 
             // ✅ Dùng cache thay vì FutureBuilder
             final screen = _screenCache[showtime.screenId];
-            final screenName = screen?.name ?? 'Đang tải...';
+            final screenName =
+                screen?.name ?? '...'; // Sửa: 'Đang tải...' -> '...'
 
             return InkWell(
               onTap: canBook
@@ -586,12 +592,12 @@ class _BookingScreenState extends State<BookingScreen> {
 
                           // ✅ Dùng cache thay vì FutureBuilder
                           final screen = _screenCache[showtime.screenId];
-                          final screenName = screen?.name ?? 'Đang tải...';
+                          final screenName = screen?.name ?? '...'; // Sửa
 
                           return InkWell(
                             onTap: canBook
                                 ? () async {
-                                    // ✅ Chỉ update ValueNotifier - không setState
+                                    // ✅ Chỉ update ValueNotifier
                                     selectedShowtimeNotifier.value = showtime;
                                     selectedSeatsNotifier.value = [];
                                     await _loadShowtimeDetails(showtime);
@@ -663,14 +669,25 @@ class _BookingScreenState extends State<BookingScreen> {
   /// ✅ NEW: Load screen and theater details (update ValueNotifier thay vì setState)
   Future<void> _loadShowtimeDetails(Showtime showtime) async {
     try {
+      // Đảm bảo cache được load nếu chưa có
+      if (_screenCache[showtime.screenId] == null) {
+        final screen = await _firestoreService.getScreenById(showtime.screenId);
+        if (screen != null && mounted) {
+          _screenCache[showtime.screenId] = screen;
+        }
+      }
+
       final results = await Future.wait<Object?>([
-        _firestoreService.getScreenById(showtime.screenId),
+        // Trả về từ cache nếu có
+        Future.value(_screenCache[showtime.screenId]),
         _firestoreService.getTheaterById(showtime.theaterId),
       ]);
 
       // ✅ Update ValueNotifiers - không cần setState
-      selectedScreenNotifier.value = results[0] as Screen?;
-      selectedTheaterNotifier.value = results[1] as Theater?;
+      if (mounted) {
+        selectedScreenNotifier.value = results[0] as Screen?;
+        selectedTheaterNotifier.value = results[1] as Theater?;
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -689,6 +706,8 @@ class _BookingScreenState extends State<BookingScreen> {
       valueListenable: selectedScreenNotifier,
       builder: (context, selectedScreen, _) {
         if (selectedScreen == null) {
+          // Sửa: Thêm kiểm tra nếu _loadShowtimeDetails đang chạy
+          // (Nhưng vì _loadShowtimeDetails nhanh, CircularProgress là đủ)
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -736,11 +755,10 @@ class _BookingScreenState extends State<BookingScreen> {
 
                 // Screen label
                 Text(
-                  "SCREEN",
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  "MÀN HÌNH", // Sửa: "SCREEN" -> "MÀN HÌNH"
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2), // Thêm letterSpacing
                 ),
                 Container(
                   height: 10,
@@ -828,14 +846,15 @@ class _BookingScreenState extends State<BookingScreen> {
             final seatIndex = screen.seats.indexWhere((s) => s.id == seatId);
 
             if (seatIndex == -1) {
-              // Không tìm thấy seat → đây là AISLE
+              // Không tìm thấy seat → đây là AISLE (lối đi)
               return Container(
                 alignment: Alignment.center,
-                child: Icon(
-                  Icons.arrow_downward,
-                  size: 16,
-                  color: AppTheme.textSecondaryColor.withOpacity(0.3),
-                ),
+                // Sửa: Thêm icon lối đi (nếu muốn) hoặc để trống
+                // child: Icon(
+                //   Icons.arrow_downward,
+                //   size: 16,
+                //   color: AppTheme.textSecondaryColor.withOpacity(0.3),
+                // ),
               );
             }
 
@@ -856,13 +875,20 @@ class _BookingScreenState extends State<BookingScreen> {
 
             return GestureDetector(
               onTap: isBooked
-                  ? null
+                  ? null // Không cho nhấn nếu đã đặt
                   : () {
                       // ✅ Chỉ update ValueNotifier - không setState
                       final updatedSeats = List<String>.from(selectedSeats);
                       if (isSelected) {
                         updatedSeats.remove(seat.id);
                       } else {
+                        // TODO: Thêm logic giới hạn số lượng ghế chọn (ví dụ: 8 ghế)
+                        // if (updatedSeats.length >= 8) {
+                        //   ScaffoldMessenger.of(context).showSnackBar(
+                        //     SnackBar(content: Text('Chỉ được chọn tối đa 8 ghế.'))
+                        //   );
+                        //   return;
+                        // }
                         updatedSeats.add(seat.id);
                       }
                       selectedSeatsNotifier.value = updatedSeats;
@@ -872,21 +898,25 @@ class _BookingScreenState extends State<BookingScreen> {
                 decoration: BoxDecoration(
                   color: seatColor,
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(8),
-                  ),
+                      top: Radius.circular(8),
+                      bottom: Radius.circular(3) // Thêm bo góc dưới
+                      ),
                   border: Border.all(
                     color: isSelected ? Colors.white : Colors.transparent,
                     width: isSelected ? 2 : 0,
                   ),
                 ),
+                // --- SỬA LỖI Ở ĐÂY ---
+                // Sửa: Hiển thị lại ID đầy đủ (A1, B1...) thay vì chỉ số cột
                 child: Text(
-                  seat.id,
+                  seat.id, // <-- ĐÃ SỬA TỪ actualCol.toString()
                   style: TextStyle(
                     fontSize: 10,
                     color: isBooked ? Colors.white54 : Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                // --- KẾT THÚC SỬA LỖI ---
               ),
             );
           },
@@ -921,19 +951,31 @@ class _BookingScreenState extends State<BookingScreen> {
                 if (selectedShowtime != null && selectedScreen != null) {
                   for (var seatId in selectedSeats) {
                     final seat = selectedScreen.seats.firstWhere(
-                      (s) => s.id == seatId,
-                      orElse: () => selectedScreen.seats.first,
-                    );
+                        (s) => s.id == seatId,
+                        // SỬA LỖI: Cung cấp 'isAvailable'
+                        orElse: () => Seat(
+                            id: '',
+                            type: 'standard',
+                            isAvailable: false) // Sửa: Xóa 'row' và 'col'
+                        );
+
+                    if (seat.id.isEmpty)
+                      continue; // Bỏ qua nếu ghế không tìm thấy
 
                     seatTypes[seatId] = seat.type;
 
                     if (seat.type == 'vip') {
                       totalPrice += selectedShowtime.vipPrice;
                     } else {
+                      // 'standard'
                       totalPrice += selectedShowtime.basePrice;
                     }
                   }
                 }
+
+                // SỬA: Dùng NumberFormat
+                final currencyFormatter =
+                    NumberFormat.currency(locale: 'vi_VN', symbol: 'VNĐ');
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -946,16 +988,20 @@ class _BookingScreenState extends State<BookingScreen> {
                           style: TextStyle(
                               color: AppTheme.textSecondaryColor, fontSize: 16),
                         ),
-                        Text(
-                          selectedSeats.isEmpty
-                              ? "Chưa chọn"
-                              : selectedSeats.join(", "),
-                          style: TextStyle(
-                            color: selectedSeats.isEmpty
-                                ? AppTheme.textSecondaryColor
-                                : AppTheme.primaryColor,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        Expanded(
+                          // Thêm Expanded để text ghế tự xuống dòng
+                          child: Text(
+                            selectedSeats.isEmpty
+                                ? "Chưa chọn"
+                                : selectedSeats.join(", "),
+                            textAlign: TextAlign.right, // Căn phải
+                            style: TextStyle(
+                              color: selectedSeats.isEmpty
+                                  ? AppTheme.textSecondaryColor
+                                  : AppTheme.primaryColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -972,7 +1018,8 @@ class _BookingScreenState extends State<BookingScreen> {
                               ?.copyWith(fontSize: 18),
                         ),
                         Text(
-                          "${totalPrice.toStringAsFixed(0)} VNĐ",
+                          currencyFormatter
+                              .format(totalPrice), // SỬA: Dùng formatter
                           style:
                               Theme.of(context).textTheme.titleLarge?.copyWith(
                                     fontSize: 18,
@@ -989,6 +1036,15 @@ class _BookingScreenState extends State<BookingScreen> {
                             selectedShowtime == null || selectedSeats.isEmpty
                                 ? null
                                 : () => _confirmBooking(totalPrice, seatTypes),
+                        style: ElevatedButton.styleFrom(
+                            // Thêm style cho nút
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            disabledBackgroundColor:
+                                AppTheme.fieldColor.withOpacity(0.5)),
                         child: const Text(
                           "Xác nhận đặt vé",
                           style: TextStyle(
@@ -1021,7 +1077,8 @@ class _BookingScreenState extends State<BookingScreen> {
     final selectedDate = selectedDateNotifier.value;
 
     // 1. Check user logged in
-    final user = FirebaseAuth.instance.currentUser;
+    // SỬA: Lấy user từ Provider
+    final user = Provider.of<AuthService>(context, listen: false).currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1037,8 +1094,9 @@ class _BookingScreenState extends State<BookingScreen> {
             label: 'Đăng nhập',
             textColor: Colors.white,
             onPressed: () {
-              // TODO: Navigate to login screen
-              Navigator.pushNamed(context, '/login');
+              // SỬA: Điều hướng đến LoginScreen
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()));
             },
           ),
         ),
@@ -1057,10 +1115,27 @@ class _BookingScreenState extends State<BookingScreen> {
       return;
     }
 
+    // --- BƯỚC 2B: THÊM RÀNG BUỘC GHẾ LẺ ---
+    if (selectedScreen != null &&
+        _hasIsolatedGap(
+            selectedScreen, selectedShowtime.bookedSeats, selectedSeats)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              const Text('Vui lòng không để lại ghế trống đơn lẻ (ghế lẻ).'),
+          backgroundColor: AppTheme.errorColor,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return; // Dừng lại, không cho đặt
+    }
+    // --- KẾT THÚC RÀNG BUỘC ---
+
     // 3. Show confirmation dialog
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.cardColor, // Sửa: Thêm màu nền
         title: const Text('Xác nhận đặt vé'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1077,7 +1152,7 @@ class _BookingScreenState extends State<BookingScreen> {
             Text('Ghế: ${selectedSeats.join(", ")}'),
             const SizedBox(height: 8),
             Text(
-              'Tổng tiền: ${totalPrice.toStringAsFixed(0)} VNĐ',
+              'Tổng tiền: ${NumberFormat.currency(locale: 'vi_VN', symbol: 'VNĐ').format(totalPrice)}', // Sửa: Dùng formatter
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryColor,
@@ -1092,6 +1167,8 @@ class _BookingScreenState extends State<BookingScreen> {
             child: const Text('Hủy'),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor), // Sửa: Thêm style
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Xác nhận'),
           ),
@@ -1102,12 +1179,12 @@ class _BookingScreenState extends State<BookingScreen> {
     if (confirm != true) return;
 
     // 4. Create booking
-    EasyLoading.show(status: 'Đang đặt vé...');
+    EasyLoading.show(status: 'Đang tạo booking...'); // Sửa: 'Đang đặt vé...'
 
     try {
       // Create booking object
       final booking = Booking(
-        id: '', // Firestore will generate
+        id: '', // Firestore sẽ tạo
         userId: user.uid,
         showtimeId: selectedShowtime.id,
         movieId: widget.movie.id,
@@ -1116,11 +1193,16 @@ class _BookingScreenState extends State<BookingScreen> {
         screenId: selectedShowtime.screenId,
         selectedSeats: selectedSeats,
         seatTypes: seatTypes,
-        theaterName: selectedTheater?.name ?? '',
-        screenName: selectedScreen?.name ?? '',
+        // SỬA: Đảm bảo có giá trị (fallback)
+        theaterName: selectedTheater?.name ?? 'Không rõ rạp',
+        screenName: selectedScreen?.name ?? 'Không rõ phòng',
+        // <-- THÊM: Lưu thời gian chiếu chính xác
         totalPrice: totalPrice,
-        status: 'pending',
+        status: 'pending', // Trạng thái chờ thanh toán
         createdAt: DateTime.now(),
+        // updatedAt: null, // Sửa: Không cần gán null
+        // paymentId: null,
+        // metadata: null,
       );
 
       // ✅ Save to Firestore (with transaction to prevent double booking)
@@ -1129,22 +1211,22 @@ class _BookingScreenState extends State<BookingScreen> {
       EasyLoading.dismiss();
 
       if (!mounted) return;
-      if (mounted) {
-        // Dùng rootNavigator: true để đóng dialog "Xác nhận"
-        Navigator.of(context, rootNavigator: true).pop();
 
-        // Chuyển sang màn hình Chọn Thanh toán
-        // Dùng pushReplacement để người dùng không "back" lại được màn hình chọn ghế
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PaymentSelectionScreen(
-              bookingId: bookingId, // ID booking vừa tạo
-              amount: totalPrice, // Tổng tiền đã tính
-            ),
+      // SỬA: Xóa if(mounted) thừa
+      // Dùng rootNavigator: true để đóng dialog "Xác nhận"
+      Navigator.of(context, rootNavigator: true).pop();
+
+      // Chuyển sang màn hình Chọn Thanh toán
+      // Dùng pushReplacement để người dùng không "back" lại được màn hình chọn ghế
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PaymentSelectionScreen(
+            bookingId: bookingId, // ID booking vừa tạo
+            amount: totalPrice, // Tổng tiền đã tính
           ),
-        );
-      }
+        ),
+      );
     } catch (e) {
       EasyLoading.dismiss();
 
@@ -1166,12 +1248,81 @@ class _BookingScreenState extends State<BookingScreen> {
           backgroundColor: AppTheme.errorColor,
           duration: const Duration(seconds: 5),
           action: SnackBarAction(
-            label: 'Thử lại',
+            // SỬA: Không nên gọi lại _confirmBooking ở đây
+            label: 'Đóng',
             textColor: Colors.white,
-            onPressed: () => _confirmBooking(totalPrice, seatTypes),
+            onPressed: () =>
+                ScaffoldMessenger.of(context).hideCurrentSnackBar(),
           ),
         ),
       );
     }
   }
+
+  // --- THÊM 2 HÀM HELPER SAU VÀO CUỐI CLASS _BookingScreenState ---
+
+  /// Kiểm tra xem một ghế có phải là "vật cản" (đã đặt, đang chọn, hoặc lối đi/cạnh)
+  bool _isBarrier(String seatId, Screen screen, List<String> bookedSeats,
+      List<String> selectedSeats) {
+    // 1. Kiểm tra xem có phải là ghế đang chọn hoặc đã đặt
+    if (bookedSeats.contains(seatId) || selectedSeats.contains(seatId)) {
+      return true;
+    }
+
+    // 2. Kiểm tra xem có phải là lối đi/cạnh (không tồn tại trong danh sách `screen.seats`)
+    // `screen.seats` chỉ chứa các ghế vật lý, không chứa lối đi.
+    if (!screen.seats.any((s) => s.id == seatId)) {
+      // Đây là một ID không tồn tại (ví dụ: A0, A13, hoặc lối đi như A5)
+      return true;
+    }
+
+    // 3. Nếu không phải 1 và 2, nó là một ghế trống (available)
+    return false;
+  }
+
+  /// Hàm kiểm tra chính: Quét toàn bộ sơ đồ ghế
+  bool _hasIsolatedGap(
+      Screen screen, List<String> bookedSeats, List<String> selectedSeats) {
+    // Duyệt qua TẤT CẢ các ghế vật lý có trong sơ đồ
+    for (final seat in screen.seats) {
+      // Chúng ta chỉ quan tâm đến những ghế "Trống" (Available)
+      // (Ghế trống là ghế KHÔNG bị đặt VÀ KHÔNG được chọn)
+      final bool isAvailable =
+          !bookedSeats.contains(seat.id) && !selectedSeats.contains(seat.id);
+
+      if (isAvailable) {
+        // Đây là một ghế trống. Kiểm tra xem nó có bị "lẻ" (kẹt) không.
+
+        // 1. Lấy thông tin hàng và cột
+        // SỬA: Xử lý an toàn nếu substring lỗi
+        if (seat.id.isEmpty) continue;
+        final String row = seat.id[0]; // Ví dụ: 'C'
+        final int? col = int.tryParse(seat.id.substring(1)); // Ví dụ: 5
+        if (col == null)
+          continue; // Bỏ qua nếu ID ghế không phải dạng C5 (ví dụ: "VIP1")
+
+        // 2. Xác định ID của ghế bên trái và bên phải
+        final String leftNeighborId = '$row${col - 1}'; // Ví dụ: 'C4'
+        final String rightNeighborId = '$row${col + 1}'; // Ví dụ: 'C6'
+
+        // 3. Kiểm tra xem 2 ghế bên cạnh có phải là "vật cản" không
+        bool isLeftBarrier =
+            _isBarrier(leftNeighborId, screen, bookedSeats, selectedSeats);
+        bool isRightBarrier =
+            _isBarrier(rightNeighborId, screen, bookedSeats, selectedSeats);
+
+        // 4. NẾU cả hai bên đều là vật cản -> Đây là ghế lẻ!
+        if (isLeftBarrier && isRightBarrier) {
+          // Lỗi! Đã tìm thấy một ghế trống (seat.id) bị kẹt
+          print(
+              "Lỗi ràng buộc ghế lẻ: Ghế ${seat.id} đang bị bỏ trống một mình!");
+          return true; // Trả về true (có lỗi)
+        }
+      }
+    }
+
+    // Nếu duyệt hết tất cả các ghế mà không tìm thấy ghế lẻ nào
+    return false; // Trả về false (không có lỗi)
+  }
+  // --- KẾT THÚC THÊM 2 HÀM HELPER ---
 }

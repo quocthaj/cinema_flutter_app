@@ -15,4 +15,14 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+    
+    <!-- 🔥 UCrop Theme - Đảm bảo toolbar hiển thị đúng -->
+    <style name="UCropTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">#9B3232</item>
+        <item name="colorPrimaryDark">#9B3232</item>
+        <item name="colorAccent">#9B3232</item>
+        <item name="android:statusBarColor">#9B3232</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:fitsSystemWindows">true</item>
+    </style>
 </resources>

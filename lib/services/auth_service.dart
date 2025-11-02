@@ -36,6 +36,14 @@ class AuthService {
       final User? user = userCredential.user;
 
       if (user != null) {
+        // Cập nhật displayName trên FirebaseAuth để UI có thể đọc trực tiếp (nếu cần)
+        try {
+          await user.updateDisplayName(displayName);
+          await user.reload();
+        } catch (e) {
+          print('Không thể cập nhật displayName trên Auth: $e');
+        }
+
         // 🔥 ADMIN: Check whitelist để tự động promote
         final isWhitelisted = await _adminService.isInAdminWhitelist(email);
         final role = isWhitelisted ? 'admin' : 'user';

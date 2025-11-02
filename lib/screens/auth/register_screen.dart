@@ -1,3 +1,4 @@
+import 'package:doan_mobile/screens/home/home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // <-- THÊM: Để bắt lỗi Firebase
 import 'package:flutter/material.dart';
 import '/services/auth_service.dart'; // <-- Thay 'movie_app' bằng tên dự án
@@ -57,8 +58,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // Không cần pushReplacement vì AuthWrapper sẽ tự điều hướng.
           // Pop màn hình này để quay lại màn hình trước (thường là Login),
           // AuthWrapper sẽ tự chuyển sang HomeScreen.
-          if (Navigator.canPop(context)) {
-            Navigator.of(context).pop();
+          if (mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
+              (route) => false,
+            );
           }
         }
         // Trường hợp user == null (thường không xảy ra nếu không có exception,

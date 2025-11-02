@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 🔥 THÊM: Permissions cho camera và storage -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    
     <application
         android:label="doan_mobile"
         android:name="${applicationName}"
@@ -34,6 +40,13 @@
             <data android:scheme="https" android:host="share-move2bfit.vercel.app" android:pathPrefix="/challenge" />
         </intent-filter>
         </activity>
+        
+        <!-- 🔥 THÊM: UCrop Activity cho image_cropper -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/UCropTheme"/>
+        
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
@@ -48,10 +61,17 @@
     <queries>
     <!-- <package android:name="com.mservice.momotransfer" /> -->
         <intent>
+
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
             <!-- <action android:name="android.intent.action.VIEW" />
             <data android:scheme="momo" /> -->
         </intent>
+
+        <intent>
+        <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        
     </queries>
 </manifest>

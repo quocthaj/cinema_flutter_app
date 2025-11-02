@@ -8,6 +8,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart'; // <-- Dùng Easy
 import 'package:doan_mobile/services/auth_service.dart';
 import 'package:doan_mobile/services/firestore_service.dart';
 import 'package:doan_mobile/services/payment_service.dart';
+import 'package:intl/date_symbol_data_local.dart'; // <-- THÊM DÒNG NÀY
 
 // --- SỬA ĐƯỜNG DẪN MÀN HÌNH ---
 // (AuthWrapper sẽ được tạo ở file riêng, file 2)
@@ -22,6 +23,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  await initializeDateFormatting('vi_VN', null);
   // 2. Cấu hình EasyLoading (từ code của bạn)
   configLoading();
 

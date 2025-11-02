@@ -9,6 +9,7 @@ import '/models/showtime.dart';
 import '/models/booking_model.dart';
 import '/models/payment_model.dart';
 import '/models/user_model.dart';
+import '/models/news_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -76,6 +77,65 @@ class FirestoreService {
         .snapshots()
         .map((snapshot) =>
             snapshot.docs.map((doc) => Theater.fromFirestore(doc)).toList());
+  }
+
+  // ========================================
+  // 📰 QUẢN LÝ TIN TỨC & KHUYẾN MÃI (NEWS)
+  // ========================================
+
+  /// Thêm một news/promotion
+  Future<String> addNews(Map<String, dynamic> data) async {
+    final docRef = await _db.collection('news').add({
+      ...data,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return docRef.id;
+  }
+
+  /// Cập nhật news theo id
+  Future<void> updateNews(String newsId, Map<String, dynamic> data) async {
+    await _db.collection('news').doc(newsId).update({
+      ...data,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Xóa news
+  Future<void> deleteNews(String newsId) async {
+    await _db.collection('news').doc(newsId).delete();
+  }
+
+  /// Lấy news theo id (Future)
+  Future<NewsModel?> getNewsById(String newsId) async {
+    final doc = await _db.collection('news').doc(newsId).get();
+    if (doc.exists) {
+      return NewsModel.fromFirestore(doc);
+    }
+    return null;
+  }
+
+  /// Stream tất cả news (sorted by createdAt desc)
+  Stream<List<NewsModel>> getNewsStream() {
+    return _db
+        .collection('news')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => NewsModel.fromFirestore(doc))
+            .toList());
+  }
+
+  /// Stream chỉ các promotions (category == 'promotion' và isActive && date range)
+  Stream<List<NewsModel>> getPromotionsStream() {
+    return _db
+        .collection('news')
+        .where('category', isEqualTo: 'promotion')
+        .where('isActive', isEqualTo: true)
+        .orderBy('startDate', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => NewsModel.fromFirestore(doc))
+            .toList());
   }
 
   /// Lấy chi tiết một rạp
@@ -367,6 +427,16 @@ class FirestoreService {
       return UserModel.fromFirestore(doc);
     }
     return null;
+  }
+
+  /// Lấy thông tin user real-time (Stream)
+  Stream<Map<String, dynamic>?> getUserStream(String userId) {
+    return _db.collection('users').doc(userId).snapshots().map((doc) {
+      if (doc.exists) {
+        return doc.data();
+      }
+      return null;
+    });
   }
 
   /// Cập nhật thông tin user

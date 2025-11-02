@@ -1,9 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart'; // <-- THÊM
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '/services/auth_service.dart'; // <-- Sửa đường dẫn nếu cần
-import '/services/firestore_service.dart'; // <-- Sửa đường dẫn nếu cần
-import '/models/movie.dart'; // <-- Sửa đường dẫn nếu cần
-import '/config/theme.dart'; // <-- Sửa đường dẫn nếu cần
+import 'package:provider/provider.dart'; // <-- THÊM: Dùng Provider
+import 'package:intl/intl.dart'; // <-- THÊM: Dùng Intl
+import 'package:cached_network_image/cached_network_image.dart'; // <-- THÊM: Dùng CachedImage
+
+// SỬA: Đảm bảo các đường dẫn này là chính xác
+import 'package:doan_mobile/services/auth_service.dart';
+import 'package:doan_mobile/services/firestore_service.dart';
+import 'package:doan_mobile/models/movie.dart';
+import 'package:doan_mobile/config/theme.dart';
 
 class WatchedMoviesScreen extends StatefulWidget {
   const WatchedMoviesScreen({super.key});
@@ -13,13 +18,20 @@ class WatchedMoviesScreen extends StatefulWidget {
 }
 
 class _WatchedMoviesScreenState extends State<WatchedMoviesScreen> {
-  final AuthService _authService = AuthService();
-  final FirestoreService _firestoreService = FirestoreService();
+  // SỬA: Dùng 'late final'
+  late final AuthService _authService;
+  late final FirestoreService _firestoreService;
   String? _userId; // Lưu userId để dùng trong StreamBuilder
+
+  // SỬA: Thêm định dạng ngày giờ
+  final DateFormat _dateTimeFormatter = DateFormat('dd/MM/yyyy HH:mm', 'vi_VN');
 
   @override
   void initState() {
     super.initState();
+    // SỬA: Lấy service từ Provider
+    _authService = Provider.of<AuthService>(context, listen: false);
+    _firestoreService = Provider.of<FirestoreService>(context, listen: false);
     _userId = _authService.currentUser?.uid; // Lấy userId khi màn hình khởi tạo
   }
 
@@ -30,6 +42,8 @@ class _WatchedMoviesScreenState extends State<WatchedMoviesScreen> {
     final Color primaryColor = AppTheme.primaryColor;
     final Color textColor = AppTheme.textPrimaryColor;
     final Color secondaryTextColor = AppTheme.textSecondaryColor;
+    final Color cardColor = AppTheme.cardColor;
+    final Color fieldColor = AppTheme.fieldColor;
 
     return Scaffold(
       backgroundColor: backgroundColor, // Áp dụng màu nền
@@ -45,6 +59,8 @@ class _WatchedMoviesScreenState extends State<WatchedMoviesScreen> {
               style: TextStyle(color: secondaryTextColor),
             ))
           : StreamBuilder<QuerySnapshot>(
+              // SỬA: Đảm bảo stream này đúng
+              // (getUserBookingsStream trả về 'bookings' nơi userId == _userId)
               stream: _firestoreService.getUserBookingsStream(_userId!),
               builder: (context, snapshot) {
                 // Đang tải dữ liệu
@@ -79,15 +95,15 @@ class _WatchedMoviesScreenState extends State<WatchedMoviesScreen> {
                     final showtimeDateTime =
                         bookingData['showtimeDateTime'] as Timestamp?;
 
-                    // Định dạng ngày xem
+                    // SỬA: Dùng DateFormat
                     final String watchedDateString = showtimeDateTime != null
-                        ? '${showtimeDateTime.toDate().day.toString().padLeft(2, '0')}/${showtimeDateTime.toDate().month.toString().padLeft(2, '0')}/${showtimeDateTime.toDate().year} ${showtimeDateTime.toDate().hour.toString().padLeft(2, '0')}:${showtimeDateTime.toDate().minute.toString().padLeft(2, '0')}'
+                        ? _dateTimeFormatter.format(showtimeDateTime.toDate())
                         : 'Không rõ ngày';
 
                     // Nếu không có movieId thì hiển thị tạm
                     if (movieId == null || movieId.isEmpty) {
                       return Card(
-                        color: AppTheme.cardColor, // Màu nền Card
+                        color: cardColor, // Màu nền Card
                         margin: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         shape: RoundedRectangleBorder(
@@ -113,7 +129,7 @@ class _WatchedMoviesScreenState extends State<WatchedMoviesScreen> {
                             ConnectionState.waiting) {
                           // Placeholder giữ chỗ đẹp hơn
                           return Card(
-                            color: AppTheme.cardColor,
+                            color: cardColor,
                             margin: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
                             shape: RoundedRectangleBorder(
@@ -122,8 +138,7 @@ class _WatchedMoviesScreenState extends State<WatchedMoviesScreen> {
                               leading: Container(
                                   width: 50,
                                   height: 75,
-                                  color: AppTheme
-                                      .fieldColor, // Màu nền placeholder
+                                  color: fieldColor, // Màu nền placeholder
                                   child: Center(
                                       child: SizedBox(
                                           width: 20,
@@ -134,14 +149,13 @@ class _WatchedMoviesScreenState extends State<WatchedMoviesScreen> {
                               title: Container(
                                   height: 14,
                                   width: 150,
-                                  color: AppTheme
-                                      .fieldColor), // Placeholder cho title
+                                  color: fieldColor), // Placeholder cho title
                               subtitle: Container(
                                   height: 12,
                                   width: 100,
                                   margin: const EdgeInsets.only(top: 4),
-                                  color: AppTheme
-                                      .fieldColor), // Placeholder cho subtitle
+                                  color:
+                                      fieldColor), // Placeholder cho subtitle
                             ),
                           );
                         }
@@ -150,7 +164,7 @@ class _WatchedMoviesScreenState extends State<WatchedMoviesScreen> {
                             !movieSnapshot.hasData ||
                             movieSnapshot.data == null) {
                           return Card(
-                            color: AppTheme.cardColor,
+                            color: cardColor,
                             margin: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
                             shape: RoundedRectangleBorder(
@@ -160,7 +174,7 @@ class _WatchedMoviesScreenState extends State<WatchedMoviesScreen> {
                                   style: TextStyle(color: textColor)),
                               subtitle: Text('Ngày xem: $watchedDateString',
                                   style: TextStyle(color: secondaryTextColor)),
-                              leading: Icon(Icons.error_outline,
+                              leading: const Icon(Icons.error_outline,
                                   color: Colors.redAccent),
                             ),
                           );
@@ -171,7 +185,7 @@ class _WatchedMoviesScreenState extends State<WatchedMoviesScreen> {
 
                         // Hiển thị ListTile với đầy đủ thông tin
                         return Card(
-                          color: AppTheme.cardColor,
+                          color: cardColor,
                           margin: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 8),
                           shape: RoundedRectangleBorder(
@@ -186,24 +200,28 @@ class _WatchedMoviesScreenState extends State<WatchedMoviesScreen> {
                               child: ClipRRect(
                                 // Thêm ClipRRect để bo góc ảnh
                                 borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  movie.posterUrl,
+                                child: CachedNetworkImage(
+                                  // SỬA: Dùng CachedNetworkImage
+                                  imageUrl: movie.posterUrl,
                                   fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, progress) {
-                                    if (progress == null) return child;
+                                  placeholder: (context, url) {
                                     return Container(
-                                        color: AppTheme.fieldColor,
+                                        color: fieldColor,
                                         child: Center(
                                             child: SizedBox(
                                                 width: 20,
                                                 height: 20,
-                                                child: CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                    color: primaryColor))));
+                                                child:
+                                                    CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color: primaryColor))));
                                   },
-                                  errorBuilder: (context, error, stackTrace) =>
+                                  // --- SỬA LỖI Ở ĐÂY ---
+                                  // Đổi 'errorBuilder' thành 'errorWidget'
+                                  errorWidget: (context, url, error) =>
+                                      // --- KẾT THÚC SỬA LỖI ---
                                       Container(
-                                          color: AppTheme.fieldColor,
+                                          color: fieldColor,
                                           child: Icon(
                                               Icons.movie_creation_outlined,
                                               color: secondaryTextColor,

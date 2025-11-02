@@ -2,10 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:doan_mobile/models/payment_model.dart'; // Chứa TransactionReceipt
-import 'package:doan_mobile/services/firestore_service.dart'; // Service vừa tạo
-import 'package:doan_mobile/screens/home/home_screen.dart'; // Màn hình chính
-import 'package:doan_mobile/config/theme.dart'; // Theme của bạn
+import 'package:doan_mobile/models/payment_model.dart';
+import 'package:doan_mobile/services/firestore_service.dart'; // Sửa đường dẫn nếu cần
+import 'package:doan_mobile/screens/home/home_screen.dart'; // Sửa đường dẫn nếu cần
+import 'package:doan_mobile/config/theme.dart'; // Sửa đường dẫn nếu cần
+import 'package:provider/provider.dart'; // Dùng Provider để lấy service
 
 class ReceiptScreen extends StatefulWidget {
   final String paymentDocId; // Nhận ID từ TransactionStatusScreen
@@ -17,12 +18,20 @@ class ReceiptScreen extends StatefulWidget {
 }
 
 class _ReceiptScreenState extends State<ReceiptScreen> {
-  final FirestoreService _firestoreService = FirestoreService();
+  // SỬA: Lấy service từ Provider (cách tốt nhất)
+  // (Chúng ta đã setup Provider trong main.dart)
+  late final FirestoreService _firestoreService;
   late Future<TransactionReceipt> _receiptFuture;
 
   @override
   void initState() {
     super.initState();
+    // Lấy service từ Provider. 'listen: false' an toàn trong initState.
+    // Lưu ý: Nếu bạn chưa sửa main.dart để dùng Provider,
+    // code cũ 'FirestoreService()' của bạn vẫn chạy được,
+    // nhưng đây là cách làm chuẩn hơn.
+    _firestoreService = Provider.of<FirestoreService>(context, listen: false);
+
     // Gọi hàm fetch dữ liệu ngay khi màn hình được tạo
     _receiptFuture = _firestoreService.getReceiptDetails(widget.paymentDocId);
   }
